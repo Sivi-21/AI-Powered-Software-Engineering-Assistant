@@ -5,7 +5,7 @@ from typing import Any, TypedDict, List, Dict
 from pydantic import BaseModel, Field
 
 from langgraph.graph import StateGraph, START, END
-from langchain_core.messages import SystemMessage, HumanMessage
+from langchain_core.messages import SystemMessage, HumanMessage, AIMessage
 from app.services.llm_provider import get_llm
 
 from app.config import settings
@@ -17,7 +17,7 @@ from app.services.security_analyst import security_analyst
 from app.services.doc_generator import doc_generator
 from app.services.test_generator import test_generator
 from app.services.quality_scorer import quality_scorer
-from app.schemas.report import Vulnerability, Suggestion, ReportCreate
+from app.schemas.report import Vulnerability, Suggestion, ReportCreate, AIFix
 
 logger = logging.getLogger("app.services.agent_workflow")
 
@@ -36,6 +36,15 @@ class AnalysisState(TypedDict):
     generated_unit_tests: Dict[str, Any]
     health_summary: str
     code_quality_score: int
+    security_score: int
+    architecture_score: int
+    maintainability_score: int
+    documentation_score: int
+    testing_score: int
+    dependency_score: int
+    technical_debt: int
+    code_complexity: int
+    ai_fixes: List[dict]
     full_report_md: str
     error: str | None
 
@@ -158,6 +167,84 @@ class AgentWorkflow:
             logger.error(f"Error in synthesize_report: {str(e)}")
             return {"full_report_md": f"# Analysis Report\n\nFailed to compile full report due to error: {str(e)}"}
 
+    async def generate_fixes(self, state: AnalysisState) -> dict:
+        """Node: Generates AI-powered fixes for detected security vulnerabilities, bugs, and code smells."""
+        logger.info(f"[{state['project_name']}] Node: Generate AI Fixes started.")
+        await db_service.update_project_progress(state["project_id"], "Agent: Generating AI Code Fixes...")
+        
+        findings_to_fix = []
+        
+        # Gather security vulns
+        for v in state.get("security_vulnerabilities", []):
+            findings_to_fix.append({
+                "file_path": v.get("file_path", "unknown"),
+                "line_number": v.get("line_number"),
+                "issue_type": "Security Vulnerability",
+                "severity": v.get("severity", "MEDIUM"),
+                "description": v.get("description", "Security alert."),
+                "snippet": v.get("snippet") or "No snippet available."
+            })
+            
+        # Gather bugs
+        for b in state.get("bug_detections", []):
+            findings_to_fix.append({
+                "file_path": b.get("file_path", "unknown"),
+                "line_number": b.get("line_number"),
+                "issue_type": f"Bug: {b.get('bug_type', 'Logic Error')}",
+                "severity": b.get("severity", "MEDIUM"),
+                "description": b.get("description", "Logic issue."),
+                "snippet": b.get("snippet") or "No snippet available."
+            })
+            
+        # Gather code smells
+        for cr in state.get("code_review_findings", []):
+            findings_to_fix.append({
+                "file_path": cr.get("file", "unknown"),
+                "line_number": cr.get("line_number"),
+                "issue_type": f"Code Quality: {cr.get('issue', 'Style Issue')}",
+                "severity": cr.get("severity", "MEDIUM"),
+                "description": cr.get("explanation", "Style smell."),
+                "snippet": cr.get("snippet") or "No snippet available."
+            })
+            
+        # Limit to top 8 findings to preserve API quota
+        findings_to_fix = findings_to_fix[:8]
+        
+        fixes = []
+        import asyncio
+        from app.services.fix_service import fix_service
+        
+        async def process_fix(f):
+            try:
+                res = await fix_service.generate_fix(
+                    file_path=f["file_path"],
+                    snippet=f["snippet"],
+                    issue_description=f["description"]
+                )
+                return {
+                    "file_path": f["file_path"],
+                    "line_number": f["line_number"],
+                    "issue_type": f["issue_type"],
+                    "severity": f["severity"],
+                    "root_cause": res.get("root_cause", "N/A"),
+                    "explanation": res.get("explanation", "N/A"),
+                    "before_code": f["snippet"],
+                    "fixed_code": res.get("corrected_code", f["snippet"]),
+                    "why_fix_works": res.get("why_fix_works") or res.get("explanation") or "Corrects invalid code pattern.",
+                    "best_practices": res.get("best_practices", []),
+                    "confidence_score": res.get("confidence_score", 85)
+                }
+            except Exception as e:
+                logger.error(f"Error generating fix for {f['file_path']}: {e}")
+                return None
+
+        tasks = [process_fix(f) for f in findings_to_fix]
+        results = await asyncio.gather(*tasks)
+        fixes = [r for r in results if r is not None]
+        
+        return {"ai_fixes": fixes}
+
+
     # --- Setup Graph ---
 
     def _build_graph(self):
@@ -169,6 +256,7 @@ class AgentWorkflow:
         builder.add_node("detect_bugs", self.detect_bugs)
         builder.add_node("audit_security", self.audit_security)
         builder.add_node("generate_docs", self.generate_docs)
+        builder.add_node("generate_fixes", self.generate_fixes)
         builder.add_node("generate_tests", self.generate_tests)
         builder.add_node("score_quality", self.score_quality)
         builder.add_node("synthesize_report", self.synthesize_report)
@@ -179,17 +267,24 @@ class AgentWorkflow:
         builder.add_edge("analyze_architecture", "detect_bugs")
         builder.add_edge("analyze_architecture", "audit_security")
         
-        # Fan in to docs -> tests -> score -> report
+        # Fan in review findings to docs & fixes
         builder.add_edge("review_code", "generate_docs")
         builder.add_edge("detect_bugs", "generate_docs")
         builder.add_edge("audit_security", "generate_docs")
         
+        builder.add_edge("review_code", "generate_fixes")
+        builder.add_edge("detect_bugs", "generate_fixes")
+        builder.add_edge("audit_security", "generate_fixes")
+        
+        # Link docs and fixes to tests -> score -> report
         builder.add_edge("generate_docs", "generate_tests")
+        builder.add_edge("generate_fixes", "generate_tests")
         builder.add_edge("generate_tests", "score_quality")
         builder.add_edge("score_quality", "synthesize_report")
         builder.add_edge("synthesize_report", END)
         
         self.graph = builder.compile()
+
 
     # --- Executable Methods ---
 
@@ -244,16 +339,44 @@ class AgentWorkflow:
                 explanation=f"{cr.get('explanation', '')}\nFix Recommendation: {cr.get('recommendation', '')}"
             ))
 
+        # Parse AIFixes
+        fixes_list = []
+        for f in result_state.get("ai_fixes", []):
+            fixes_list.append(AIFix(
+                file_path=f.get("file_path", "unknown"),
+                line_number=f.get("line_number"),
+                issue_type=f.get("issue_type", "Smell"),
+                severity=f.get("severity", "MEDIUM"),
+                root_cause=f.get("root_cause", ""),
+                explanation=f.get("explanation", ""),
+                before_code=f.get("before_code", ""),
+                fixed_code=f.get("fixed_code", ""),
+                why_fix_works=f.get("why_fix_works", ""),
+                best_practices=f.get("best_practices", []),
+                confidence_score=f.get("confidence_score", 85)
+            ))
+
         return ReportCreate(
             project_id=project_id,
             summary=result_state.get("health_summary") or result_state.get("architecture_summary") or "Analysis completed.",
             code_quality_score=result_state.get("code_quality_score", 70),
+            security_score=result_state.get("security_score", 100),
+            architecture_score=result_state.get("architecture_score", 100),
+            maintainability_score=result_state.get("maintainability_score", 100),
+            documentation_score=result_state.get("documentation_score", 100),
+            testing_score=result_state.get("testing_score", 100),
+            dependency_score=result_state.get("dependency_score", 100),
+            technical_debt=result_state.get("technical_debt", 0),
+            code_complexity=result_state.get("code_complexity", 0),
             vulnerabilities=vulns,
             suggestions=suggs,
+            ai_fixes=fixes_list,
+            generated_docs=result_state.get("documentation_manifest", {}),
             full_report_md=result_state.get("full_report_md", "# Report generation failed.")
         )
 
-    async def answer_codebase_query(self, project_id: uuid.UUID, project_name: str, query: str) -> dict:
+
+    async def answer_codebase_query(self, project_id: uuid.UUID, project_name: str, query: str, history: list[dict] = []) -> dict:
         """Performs a simple codebase RAG search and returns a QA response from Gemini."""
         logger.info(f"Answering query on codebase '{project_name}' for query: '{query}'")
         
@@ -267,17 +390,26 @@ class AgentWorkflow:
         system_prompt = (
             f"You are a helpful software engineering assistant working on the codebase '{project_name}'. "
             "Answer the user's question about the codebase based on the provided semantic code snippets. "
-            "Provide code examples and file references where necessary."
+            "Provide code examples and file references where necessary. "
+            "Only answer questions using repository context. If the answer cannot be determined from the codebase, explain that context is missing."
         )
         
         user_prompt = f"Context files:\n{context_str}\n\nQuestion: {query}"
         
+        # Build prompt sequence with memory history
+        messages = [SystemMessage(content=system_prompt)]
+        for msg in history:
+            role = msg.get("role")
+            content = msg.get("content")
+            if role == "user":
+                messages.append(HumanMessage(content=content))
+            elif role == "assistant":
+                messages.append(AIMessage(content=content))
+        messages.append(HumanMessage(content=user_prompt))
+
         try:
             from app.services.retry_helper import ainvoke_with_retry
-            response = await ainvoke_with_retry(self.llm, [
-                SystemMessage(content=system_prompt),
-                HumanMessage(content=user_prompt)
-            ])
+            response = await ainvoke_with_retry(self.llm, messages)
             return {
                 "answer": response.content,
                 "sources": sources

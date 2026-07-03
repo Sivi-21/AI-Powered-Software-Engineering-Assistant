@@ -26,6 +26,9 @@ export default function CodeChat({ project }) {
     const queryText = textOverride || input;
     if (!queryText.trim() || loading) return;
 
+    // Build chat history list
+    const historyList = messages.map(m => ({ role: m.role, content: m.content }));
+
     // Append User message
     const userMsg = { role: "user", content: queryText };
     setMessages(prev => [...prev, userMsg]);
@@ -33,7 +36,7 @@ export default function CodeChat({ project }) {
     setLoading(true);
 
     try {
-      const data = await queryCodebase(project.id, queryText);
+      const data = await queryCodebase(project.id, queryText, historyList);
       const assistantMsg = {
         role: "assistant",
         content: data.answer,

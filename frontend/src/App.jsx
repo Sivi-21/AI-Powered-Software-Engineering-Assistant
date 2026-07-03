@@ -21,7 +21,18 @@ import {
   FolderOpen,
   BarChart2,
   Shield,
-  LogOut
+  LogOut,
+  Sparkles,
+  FileText,
+  GitPullRequest,
+  Compass,
+  Network,
+  Building2,
+  BrainCircuit,
+  Users,
+  Cpu,
+  Layers,
+  Activity
 } from 'lucide-react';
 import { listProjects, getProject, getReport, deleteProject, getProfile, loginUser, signupUser } from './api';
 
@@ -36,14 +47,68 @@ import CodeReviewFindings from './components/CodeReviewFindings';
 import SettingsView from './components/SettingsView';
 import MvpUpload from './components/MvpUpload';
 import RepositoryCard from './components/RepositoryCard';
+import AIFixes from './components/AIFixes';
+import DocumentationView from './components/DocumentationView';
+import PRReviewView from './components/PRReviewView';
+import ProjectPlanner from './components/ProjectPlanner';
+import AutonomousEngineer from './components/AutonomousEngineer';
+import KnowledgeGraph from './components/KnowledgeGraph';
+import OrganizationCloud from './components/OrganizationCloud';
+import SelfLearningAI from './components/SelfLearningAI';
+import CompanySimulator from './components/CompanySimulator';
+import AGSEGoalEngineering from './components/AGSEGoalEngineering';
+import CivilizationNetwork from './components/CivilizationNetwork';
+import UniversalBrain from './components/UniversalBrain';
+import EngineeringUniverse from './components/EngineeringUniverse';
+import EnterpriseDigitalTwin from './components/EnterpriseDigitalTwin';
+import CivilizationGovernment from './components/CivilizationGovernment';
+
+
+
+
+
+
+
+
+
+
+
+
+
+const safeLocalStorage = {
+  getItem: (key) => {
+    try {
+      return window.localStorage.getItem(key);
+    } catch (e) {
+      return null;
+    }
+  },
+  setItem: (key, value) => {
+    try {
+      window.localStorage.setItem(key, value);
+    } catch (e) {}
+  },
+  removeItem: (key) => {
+    try {
+      window.localStorage.removeItem(key);
+    } catch (e) {}
+  }
+};
 
 export default function App() {
   // Auth is bypassed — always treat the session as authenticated with a default local user
   const DEFAULT_USER = { name: "Developer", email: "dev@intellios.ai", organization: "AI-Powered Software Engineering Assistant Team", plan: "Developer Plan" };
   const [isAuthenticated, setIsAuthenticated] = useState(true);
   const [currentUser, setCurrentUser] = useState(() => {
-    const stored = localStorage.getItem("intellios_user");
-    return stored ? JSON.parse(stored) : DEFAULT_USER;
+    try {
+      const stored = safeLocalStorage.getItem("intellios_user");
+      if (stored && stored !== "undefined") {
+        return JSON.parse(stored);
+      }
+    } catch (e) {
+      console.error("Failed to parse user from localstorage:", e);
+    }
+    return DEFAULT_USER;
   });
 
   const [projects, setProjects] = useState([]);
@@ -59,13 +124,13 @@ export default function App() {
   // Auto-login a default dev account in the background (does not block local scans/rendering)
   useEffect(() => {
     const autoAuth = async () => {
-      const token = localStorage.getItem("token");
+      const token = safeLocalStorage.getItem("token");
       if (token) return;
       
       try {
         // Attempt login first
         const loginRes = await loginUser("dev@intellios.ai", "devpassword123!");
-        localStorage.setItem("token", loginRes.access_token);
+        safeLocalStorage.setItem("token", loginRes.access_token);
       } catch (loginErr) {
         try {
           // If login fails, try to signup first, then login
@@ -76,7 +141,7 @@ export default function App() {
             password: "devpassword123!"
           });
           const loginRes = await loginUser("dev@intellios.ai", "devpassword123!");
-          localStorage.setItem("token", loginRes.access_token);
+          safeLocalStorage.setItem("token", loginRes.access_token);
         } catch (signupErr) {
           console.error("Auto authentication failed in background:", signupErr);
         }
@@ -93,8 +158,8 @@ export default function App() {
   };
 
   const handleLogout = () => {
-    localStorage.removeItem("intellios_jwt");
-    localStorage.removeItem("intellios_user");
+    safeLocalStorage.removeItem("intellios_jwt");
+    safeLocalStorage.removeItem("intellios_user");
     setCurrentUser(DEFAULT_USER);
     setIsAuthenticated(true); // Stay authenticated — no login screen
     setSelectedProject(null);
@@ -228,6 +293,61 @@ export default function App() {
     if (activeTab === "settings") {
       return <SettingsView />;
     }
+
+    if (activeTab === "planner") {
+      return <ProjectPlanner />;
+    }
+
+    if (activeTab === "autonomous") {
+      return <AutonomousEngineer />;
+    }
+
+    if (activeTab === "org_cloud") {
+      return <OrganizationCloud />;
+    }
+
+    if (activeTab === "self_learning") {
+      return <SelfLearningAI />;
+    }
+
+    if (activeTab === "company_simulator") {
+      return <CompanySimulator />;
+    }
+
+    if (activeTab === "agse_workspace") {
+      return <AGSEGoalEngineering />;
+    }
+
+    if (activeTab === "civilization_network") {
+      return <CivilizationNetwork />;
+    }
+
+    if (activeTab === "universal_brain") {
+      return <UniversalBrain />;
+    }
+
+    if (activeTab === "engineering_universe") {
+      return <EngineeringUniverse project={selectedProject} />;
+    }
+
+    if (activeTab === "digital_twin") {
+      return <EnterpriseDigitalTwin />;
+    }
+
+    if (activeTab === "civilization_government") {
+      return <CivilizationGovernment />;
+    }
+
+
+
+
+
+
+
+
+
+
+
 
     if (activeTab === "repository_analysis") {
       return (
@@ -559,10 +679,18 @@ export default function App() {
         return <SecurityFindings report={report} />;
       case "codereview":
         return <CodeReviewFindings report={report} />;
+      case "ai_fixes":
+        return <AIFixes report={report} />;
+      case "pr_review":
+        return <PRReviewView project={selectedProject} />;
+      case "ai_docs":
+        return <DocumentationView report={report} />;
       case "documentation":
         return <ReportViewer report={report} project={selectedProject} />;
       case "chat":
         return <CodeChat project={selectedProject} />;
+      case "graph":
+        return <KnowledgeGraph project={selectedProject} />;
       default:
         return null;
     }
@@ -606,11 +734,26 @@ export default function App() {
           <div style={{ flex: 1, padding: '20px 10px', display: 'flex', flexDirection: 'column', gap: '8px' }}>
             {[
               { id: "dashboard", label: "Dashboard", icon: <LayoutDashboard size={18} /> },
+              { id: "org_cloud", label: "Organization Cloud", icon: <Building2 size={18} /> },
+              { id: "civilization_network", label: "Civilization Network", icon: <Network size={18} /> },
+              { id: "civilization_government", label: "Civilization Government", icon: <Building2 size={18} /> },
+              { id: "engineering_universe", label: "Engineering Universe", icon: <Layers size={18} /> },
+              { id: "digital_twin", label: "Digital Twin", icon: <Activity size={18} /> },
+              { id: "universal_brain", label: "Universal Brain", icon: <BrainCircuit size={18} /> },
+              { id: "self_learning", label: "Self-Learning AI", icon: <BrainCircuit size={18} /> },
+              { id: "company_simulator", label: "AI Company Simulator", icon: <Users size={18} /> },
+              { id: "planner", label: "Project Planner", icon: <Compass size={18} /> },
+              { id: "autonomous", label: "Autonomous Engineer", icon: <Terminal size={18} /> },
+              { id: "agse_workspace", label: "AGSE Workspace", icon: <Cpu size={18} /> },
               { id: "repository_analysis", label: "Repository Analysis", icon: <GitBranch size={18} /> },
+              { id: "pr_review", label: "PR Review", icon: <GitPullRequest size={18} /> },
               { id: "security", label: "Security Findings", icon: <ShieldAlert size={18} /> },
               { id: "codereview", label: "Code Review", icon: <Lightbulb size={18} /> },
-              { id: "documentation", label: "Documentation", icon: <BookOpen size={18} /> },
+              { id: "ai_fixes", label: "AI Fixes", icon: <Sparkles size={18} /> },
+              { id: "ai_docs", label: "AI Docs", icon: <BookOpen size={18} /> },
+              { id: "documentation", label: "Report Summary", icon: <FileText size={18} /> },
               { id: "chat", label: "AI Assistant", icon: <MessageSquare size={18} /> },
+              { id: "graph", label: "Knowledge Graph", icon: <Network size={18} /> },
               { id: "settings", label: "Settings", icon: <Settings size={18} /> }
             ].map(tab => {
               const isActive = activeTab === tab.id;

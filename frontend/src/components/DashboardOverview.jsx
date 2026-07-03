@@ -1,10 +1,22 @@
 import React from 'react';
-import { ShieldAlert, Lightbulb, FileText, BarChart2, Shield, FolderOpen, AlertCircle } from 'lucide-react';
+import { ShieldAlert, Lightbulb, FileText, BarChart2, Shield, FolderOpen, AlertCircle, Cpu, FileClock, BookOpen, Layers } from 'lucide-react';
 
 export default function DashboardOverview({ report, project }) {
   const score = report.code_quality_score || 70;
   const vulns = report.vulnerabilities || [];
   const suggestions = report.suggestions || [];
+
+  // Sub-scores
+  const secScore = report.security_score ?? 100;
+  const archScore = report.architecture_score ?? 100;
+  const maintScore = report.maintainability_score ?? 100;
+  const docScore = report.documentation_score ?? 100;
+  const testScore = report.testing_score ?? 100;
+  const depScore = report.dependency_score ?? 100;
+  
+  // Complexity metrics
+  const techDebt = report.technical_debt ?? 0;
+  const complexity = report.code_complexity ?? 0;
 
   // Categorize quality
   const getQualityCategory = (val) => {
@@ -29,7 +41,7 @@ export default function DashboardOverview({ report, project }) {
   const circumference = normalizedRadius * 2 * Math.PI;
   const strokeDashoffset = circumference - (score / 100) * circumference;
 
-  // Estimate files based on summary or suggestions
+  // Estimate files
   const estimatedFiles = report.summary ? (report.summary.match(/\w+\.\w+/g) || []).length + 3 : 5;
 
   return (
@@ -37,10 +49,10 @@ export default function DashboardOverview({ report, project }) {
       
       {/* 1. Header Stat Cards */}
       <div className="grid-cols-4">
-        {/* Card 1: Score */}
+        {/* Quality Score */}
         <div className="glass-card" style={{ display: 'flex', flexDirection: 'column', justifyContent: 'space-between', minHeight: '130px', position: 'relative', overflow: 'hidden' }}>
           <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', color: 'var(--text-secondary)', zIndex: 1 }}>
-            <span style={{ fontSize: '12px', fontWeight: '600', letterSpacing: '0.5px', textTransform: 'uppercase' }}>Quality Score</span>
+            <span style={{ fontSize: '11px', fontWeight: '600', letterSpacing: '0.5px', textTransform: 'uppercase' }}>Overall Health</span>
             <BarChart2 size={16} style={{ color: cat.color }} />
           </div>
           <div style={{ display: 'flex', alignItems: 'baseline', gap: '4px', margin: '14px 0 4px 0', zIndex: 1 }}>
@@ -48,73 +60,89 @@ export default function DashboardOverview({ report, project }) {
             <span style={{ fontSize: '13px', color: 'var(--text-muted)' }}>/100</span>
           </div>
           <span style={{ fontSize: '12px', fontWeight: '600', color: cat.color, zIndex: 1 }}>{cat.label} Standard</span>
-          <div style={{ position: 'absolute', right: '-10px', bottom: '-10px', opacity: 0.03, zIndex: 0 }}>
-            <BarChart2 size={80} style={{ color: cat.color }} />
-          </div>
         </div>
 
-        {/* Card 2: Security */}
+        {/* Technical Debt */}
         <div className="glass-card" style={{ display: 'flex', flexDirection: 'column', justifyContent: 'space-between', minHeight: '130px', position: 'relative', overflow: 'hidden' }}>
           <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', color: 'var(--text-secondary)', zIndex: 1 }}>
-            <span style={{ fontSize: '12px', fontWeight: '600', letterSpacing: '0.5px', textTransform: 'uppercase' }}>Security Risks</span>
-            <Shield size={16} style={{ color: vulns.length > 0 ? 'var(--danger-color)' : 'var(--success-color)' }} />
+            <span style={{ fontSize: '11px', fontWeight: '600', letterSpacing: '0.5px', textTransform: 'uppercase' }}>Technical Debt</span>
+            <Cpu size={16} style={{ color: 'var(--warning-color)' }} />
           </div>
           <div style={{ display: 'flex', alignItems: 'baseline', gap: '4px', margin: '14px 0 4px 0', zIndex: 1 }}>
-            <span style={{ fontSize: '32px', fontWeight: '700', color: vulns.length > 0 ? 'var(--danger-color)' : 'var(--success-color)' }}>
-              {vulns.length}
-            </span>
+            <span style={{ fontSize: '32px', fontWeight: '700', color: 'var(--warning-color)' }}>{techDebt}%</span>
           </div>
-          <span style={{ fontSize: '12px', color: 'var(--text-muted)', zIndex: 1 }}>
-            {criticalVulns.length + highVulns.length} High Severity Flagged
-          </span>
-          <div style={{ position: 'absolute', right: '-10px', bottom: '-10px', opacity: 0.03, zIndex: 0 }}>
-            <Shield size={80} style={{ color: vulns.length > 0 ? 'var(--danger-color)' : 'var(--success-color)' }} />
-          </div>
+          <span style={{ fontSize: '12px', color: 'var(--text-muted)', zIndex: 1 }}>Estimated effort to clean</span>
         </div>
 
-        {/* Card 3: Files */}
+        {/* Code Complexity */}
         <div className="glass-card" style={{ display: 'flex', flexDirection: 'column', justifyContent: 'space-between', minHeight: '130px', position: 'relative', overflow: 'hidden' }}>
           <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', color: 'var(--text-secondary)', zIndex: 1 }}>
-            <span style={{ fontSize: '12px', fontWeight: '600', letterSpacing: '0.5px', textTransform: 'uppercase' }}>Files Scanned</span>
-            <FolderOpen size={16} style={{ color: 'var(--accent-color)' }} />
+            <span style={{ fontSize: '11px', fontWeight: '600', letterSpacing: '0.5px', textTransform: 'uppercase' }}>Cyclomatic Complexity</span>
+            <Layers size={16} style={{ color: 'var(--accent-color)' }} />
           </div>
           <div style={{ display: 'flex', alignItems: 'baseline', gap: '4px', margin: '14px 0 4px 0', zIndex: 1 }}>
-            <span style={{ fontSize: '32px', fontWeight: '700', color: 'var(--text-primary)' }}>{estimatedFiles}</span>
+            <span style={{ fontSize: '32px', fontWeight: '700', color: 'var(--text-primary)' }}>{complexity}</span>
+            <span style={{ fontSize: '12px', color: 'var(--text-muted)' }}>avg/func</span>
           </div>
-          <span style={{ fontSize: '12px', color: 'var(--text-muted)', zIndex: 1 }}>Core codebase modules</span>
-          <div style={{ position: 'absolute', right: '-10px', bottom: '-10px', opacity: 0.03, zIndex: 0 }}>
-            <FolderOpen size={80} style={{ color: 'var(--accent-color)' }} />
-          </div>
+          <span style={{ fontSize: '12px', color: 'var(--text-muted)', zIndex: 1 }}>Branching path depth</span>
         </div>
 
-        {/* Card 4: Suggestions */}
+        {/* Refactors Flagged */}
         <div className="glass-card" style={{ display: 'flex', flexDirection: 'column', justifyContent: 'space-between', minHeight: '130px', position: 'relative', overflow: 'hidden' }}>
           <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', color: 'var(--text-secondary)', zIndex: 1 }}>
-            <span style={{ fontSize: '12px', fontWeight: '600', letterSpacing: '0.5px', textTransform: 'uppercase' }}>Refactors Flagged</span>
+            <span style={{ fontSize: '11px', fontWeight: '600', letterSpacing: '0.5px', textTransform: 'uppercase' }}>Issues Identified</span>
             <Lightbulb size={16} style={{ color: 'var(--warning-color)' }} />
           </div>
           <div style={{ display: 'flex', alignItems: 'baseline', gap: '4px', margin: '14px 0 4px 0', zIndex: 1 }}>
-            <span style={{ fontSize: '32px', fontWeight: '700', color: 'var(--warning-color)' }}>{suggestions.length}</span>
+            <span style={{ fontSize: '32px', fontWeight: '700', color: 'var(--warning-color)' }}>{suggestions.length + vulns.length}</span>
           </div>
-          <span style={{ fontSize: '12px', color: 'var(--text-muted)', zIndex: 1 }}>Action items recommended</span>
-          <div style={{ position: 'absolute', right: '-10px', bottom: '-10px', opacity: 0.03, zIndex: 0 }}>
-            <Lightbulb size={80} style={{ color: 'var(--warning-color)' }} />
-          </div>
+          <span style={{ fontSize: '12px', color: 'var(--text-muted)', zIndex: 1 }}>Actionable recommendations</span>
         </div>
       </div>
 
-      {/* 2. Visual Gauge & Quality Description */}
+      {/* 2. Circular Sub-scores Section */}
+      <div>
+        <h3 style={{ margin: '0 0 16px 0', fontSize: '13px', fontWeight: '600', color: '#fff', textTransform: 'uppercase', letterSpacing: '0.5px' }}>
+          Platform Health Category Sub-scores
+        </h3>
+        <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(140px, 1fr))', gap: '20px' }}>
+          {[
+            { label: "Security", score: secScore, color: "var(--danger-color)" },
+            { label: "Architecture", score: archScore, color: "var(--accent-color)" },
+            { label: "Maintainability", score: maintScore, color: "var(--success-color)" },
+            { label: "Documentation", score: docScore, color: "#a855f7" },
+            { label: "Testing", score: testScore, color: "#ec4899" },
+            { label: "Dependencies", score: depScore, color: "#14b8a6" }
+          ].map((item, idx) => {
+            const rad = 45;
+            const sw = 6;
+            const normRad = rad - sw * 2;
+            const circ = normRad * 2 * Math.PI;
+            const offset = circ - (item.score / 100) * circ;
+            return (
+              <div key={idx} className="glass-card" style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', gap: '12px', padding: '16px 12px', textAlign: 'center' }}>
+                <span style={{ fontSize: '12px', fontWeight: '600', color: 'var(--text-secondary)' }}>{item.label}</span>
+                <div style={{ position: 'relative', width: '90px', height: '90px' }}>
+                  <svg height="90" width="90" style={{ transform: 'rotate(-90deg)' }}>
+                    <circle stroke="rgba(255,255,255,0.02)" fill="transparent" strokeWidth={sw} r={normRad} cx="45" cy="45" />
+                    <circle stroke={item.color} fill="transparent" strokeWidth={sw} strokeDasharray={`${circ} ${circ}`} style={{ strokeDashoffset: offset, transition: 'stroke-dashoffset 0.6s' }} r={normRad} cx="45" cy="45" strokeLinecap="round" />
+                  </svg>
+                  <div style={{ position: 'absolute', top: '50%', left: '50%', transform: 'translate(-50%, -50%)', fontSize: '18px', fontWeight: '700', color: '#fff' }}>
+                    {item.score}
+                  </div>
+                </div>
+              </div>
+            );
+          })}
+        </div>
+      </div>
+
+      {/* 3. Visual Gauge & Quality Description */}
       <div className="grid-cols-2">
         <div className="glass-card" style={{ display: 'flex', alignItems: 'center', gap: '24px', padding: '24px 32px' }}>
           {/* Animated SVG Ring with Gradients */}
           <div style={{ position: 'relative', width: '120px', height: '120px', flexShrink: 0 }}>
             <svg height="120" width="120" style={{ transform: 'rotate(-90deg)' }}>
-              <defs>
-                <linearGradient id="scoreGradient" x1="0%" y1="0%" x2="100%" y2="100%">
-                  <stop offset="0%" stopColor="var(--accent-color)" />
-                  <stop offset="100%" stopColor="#818cf8" />
-                </linearGradient>
-              </defs>
               <circle
                 stroke="rgba(255, 255, 255, 0.03)"
                 fill="transparent"
@@ -124,7 +152,7 @@ export default function DashboardOverview({ report, project }) {
                 cy="60"
               />
               <circle
-                stroke={score >= 70 ? "url(#scoreGradient)" : cat.color}
+                stroke={cat.color}
                 fill="transparent"
                 strokeWidth={strokeWidth}
                 strokeDasharray={circumference + ' ' + circumference}
@@ -182,7 +210,7 @@ export default function DashboardOverview({ report, project }) {
         </div>
       </div>
 
-      {/* 3. Architecture Summary */}
+      {/* 4. Architecture Summary */}
       <div className="glass-card" style={{ padding: '28px' }}>
         <div style={{ display: 'flex', alignItems: 'center', gap: '8px', marginBottom: '16px', color: 'var(--accent-color)' }}>
           <FileText size={18} />
@@ -205,3 +233,4 @@ export default function DashboardOverview({ report, project }) {
     </div>
   );
 }
+

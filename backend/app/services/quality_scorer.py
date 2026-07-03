@@ -24,10 +24,20 @@ class QualityScorer:
         system_instruction = (
             "You are a Senior Technical Lead and Quality Manager.\n"
             "Analyze the lists of code review findings, logic bugs, and security vulnerabilities discovered in the codebase.\n"
-            "Calculate an overall quality score from 1 (broken/insecure) to 100 (flawless) and provide a high-level summary paragraph of the code health.\n\n"
+            "Calculate an overall quality score from 1 to 100, alongside specific sub-scores (1-100) for security, architecture, maintainability, documentation, testing, and dependency health.\n"
+            "Also estimate the Technical Debt (score from 0-100 representing scale of work required to fix codebase issues) and Code Complexity (average cyclomatic complexity heuristic score, usually from 1-20).\n"
+            "Provide a high-level summary paragraph of the code health.\n\n"
             "Return a JSON object matching this schema:\n"
             "{\n"
             "  \"code_quality_score\": int,\n"
+            "  \"security_score\": int,\n"
+            "  \"architecture_score\": int,\n"
+            "  \"maintainability_score\": int,\n"
+            "  \"documentation_score\": int,\n"
+            "  \"testing_score\": int,\n"
+            "  \"dependency_score\": int,\n"
+            "  \"technical_debt\": int,\n"
+            "  \"code_complexity\": int,\n"
             "  \"health_summary\": \"string\"\n"
             "}\n"
             "Only return the raw JSON object."
@@ -48,11 +58,17 @@ class QualityScorer:
                 HumanMessage(content=user_prompt)
             ])
             data = json.loads(response.content)
-            score = data.get("code_quality_score", 80)
-            # Bound check
-            score = min(100, max(1, score))
+            
             return {
-                "code_quality_score": score,
+                "code_quality_score": min(100, max(1, data.get("code_quality_score", 80))),
+                "security_score": min(100, max(1, data.get("security_score", 80))),
+                "architecture_score": min(100, max(1, data.get("architecture_score", 80))),
+                "maintainability_score": min(100, max(1, data.get("maintainability_score", 80))),
+                "documentation_score": min(100, max(1, data.get("documentation_score", 80))),
+                "testing_score": min(100, max(1, data.get("testing_score", 80))),
+                "dependency_score": min(100, max(1, data.get("dependency_score", 80))),
+                "technical_debt": min(100, max(0, data.get("technical_debt", 15))),
+                "code_complexity": min(20, max(1, data.get("code_complexity", 5))),
                 "health_summary": data.get("health_summary", "Analysis completed.")
             }
         except Exception as e:
@@ -62,7 +78,16 @@ class QualityScorer:
             base_score = min(100, max(1, base_score))
             return {
                 "code_quality_score": base_score,
+                "security_score": min(100, max(1, 100 - len(vulns) * 20)),
+                "architecture_score": 85,
+                "maintainability_score": min(100, max(1, 100 - len(code_reviews) * 5)),
+                "documentation_score": 80,
+                "testing_score": 75,
+                "dependency_score": 90,
+                "technical_debt": min(100, len(bugs) * 4 + len(code_reviews) * 2),
+                "code_complexity": 5,
                 "health_summary": f"Calculated fallback code quality score based on finding counts: {base_score}."
             }
 
 quality_scorer = QualityScorer()
+

@@ -10,7 +10,7 @@ from app.database import get_db
 from app.config import settings
 from app.exceptions import ProjectNotFoundError, AppException
 from app.schemas.project import ProjectResponse, GitAnalyzeRequest
-from app.schemas.report import ReportResponse, QueryInput, QueryResponse
+from app.schemas.report import ReportResponse, QueryInput, QueryResponse, PRReviewRequest, PRReviewResponse
 from app.services.db_service import db_service
 from app.services.file_parser import parse_zip_file
 from app.services.vector_store import vector_store
@@ -204,7 +204,8 @@ async def query_codebase(
     response = await agent_workflow.answer_codebase_query(
         project_id=project_id,
         project_name=project.get("repository_name"),
-        query=payload.query
+        query=payload.query,
+        history=[h.model_dump() for h in payload.history] if payload.history else []
     )
     return response
 
@@ -353,5 +354,46 @@ async def analyze_mvp_github_repository(
             logger.info(f"MVP GitHub cleanup completed for project: {project_id}")
         except Exception as e:
             logger.warning(f"Failed to clean up cloned files for project {project_id}: {str(e)}")
+
+@router.get("/{project_id}/pr-reviews", response_model=list[PRReviewResponse])
+async def list_pr_reviews(
+    project_id: uuid.UUID,
+    current_user: User = Depends(get_current_user)
+):
+    """Retrieves all generated PR reviews for a project."""
+    project = await db_service.get_project(project_id)
+    if not project:
+        raise ProjectNotFoundError(str(project_id))
+    return await db_service.get_pr_reviews(project_id)
+
+@router.post("/{project_id}/pr-reviews", response_model=PRReviewResponse)
+async def create_pr_review_endpoint(
+    project_id: uuid.UUID,
+    payload: PRReviewRequest,
+    current_user: User = Depends(get_current_user)
+):
+    """Triggers an AI-powered code analysis on simulated pull request branches and stores the review."""
+    project = await db_service.get_project(project_id)
+    if not project:
+        raise ProjectNotFoundError(str(project_id))
+        
+    from app.services.pr_review_service import pr_review_service
+    review_data = await pr_review_service.generate_pr_review(
+        project_id=project_id,
+        pr_number=payload.pr_number,
+        title=payload.title,
+        source_branch=payload.source_branch,
+        target_branch=payload.target_branch
+    )
+    
+    return await db_service.create_pr_review(
+        project_id=project_id,
+        pr_number=payload.pr_number,
+        title=payload.title,
+        source_branch=payload.source_branch,
+        target_branch=payload.target_branch,
+        review_data=review_data
+    )
+
 
 
