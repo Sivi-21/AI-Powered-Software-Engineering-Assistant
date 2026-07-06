@@ -23,7 +23,7 @@ class FixService:
             "- impact: Impact of this issue (e.g. security leak, performance drop, crash).\n"
             "- explanation: Explanation of the fix.\n"
             "- suggested_fix: High-level strategy of the fix.\n"
-            "- corrected_code: Complete replacement code snippet.\n"
+            "- corrected_code: Complete replacement code snippet as a PLAIN STRING. Do NOT return this as a nested JSON object or dictionary under any circumstances. It must be a single string containing only the code.\n"
             "- best_practices: Bullet points describing best practices for this scenario.\n"
             "- confidence_score: Number between 0 and 100."
         )
@@ -41,8 +41,69 @@ class FixService:
                 HumanMessage(content=user_prompt)
             ])
             
-            # Load JSON content safely
-            data = json.loads(response.content)
+            # Load JSON content safely and robustly
+            content_str = response.content.strip()
+            if content_str.startswith("```json"):
+                content_str = content_str[7:]
+            elif content_str.startswith("```"):
+                content_str = content_str[3:]
+            if content_str.endswith("```"):
+                content_str = content_str[:-3]
+            content_str = content_str.strip()
+
+            try:
+                data = json.loads(content_str)
+            except Exception:
+                # Try finding outer braces
+                start_idx = content_str.find('{')
+                end_idx = content_str.rfind('}')
+                if start_idx != -1 and end_idx != -1 and end_idx > start_idx:
+                    data = json.loads(content_str[start_idx:end_idx + 1])
+                else:
+                    raise
+
+            if not isinstance(data, dict):
+                raise ValueError("Parsed JSON is not a dictionary/object")
+
+            # Check and clean corrected_code to be a string
+            corrected = data.get("corrected_code")
+            if isinstance(corrected, dict):
+                extracted = None
+                for key in ["code", "corrected_code", "fixed_code"]:
+                    if key in corrected and isinstance(corrected[key], str):
+                        extracted = corrected[key]
+                        break
+                if extracted is None:
+                    try:
+                        extracted = json.dumps(corrected, indent=2)
+                    except Exception:
+                        extracted = str(corrected)
+                data["corrected_code"] = extracted
+            elif corrected is None:
+                data["corrected_code"] = snippet
+            elif not isinstance(corrected, str):
+                try:
+                    data["corrected_code"] = json.dumps(corrected, indent=2)
+                except Exception:
+                    data["corrected_code"] = str(corrected)
+
+            data.setdefault("root_cause", "No root cause provided.")
+            data.setdefault("impact", "Potential bugs, crashes, or security exposures.")
+            data.setdefault("explanation", "No explanation available.")
+            data.setdefault("suggested_fix", "Examine code structure.")
+            data.setdefault("best_practices", [])
+            
+            if not isinstance(data.get("best_practices"), list):
+                if data["best_practices"] is not None:
+                    data["best_practices"] = [str(data["best_practices"])]
+                else:
+                    data["best_practices"] = []
+
+            try:
+                data["confidence_score"] = int(data.get("confidence_score", 85))
+            except Exception:
+                data["confidence_score"] = 85
+
             return data
         except Exception as e:
             logger.error(f"Failed to generate code fix: {e}", exc_info=True)
@@ -56,5 +117,6 @@ class FixService:
                 "confidence_score": 0,
                 "error": str(e)
             }
+
 
 fix_service = FixService()

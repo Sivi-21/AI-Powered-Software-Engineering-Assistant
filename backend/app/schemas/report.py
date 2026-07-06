@@ -1,6 +1,7 @@
-from pydantic import BaseModel, ConfigDict
+from pydantic import BaseModel, ConfigDict, field_validator
 from uuid import UUID
 from datetime import datetime
+from typing import Any
 
 class Vulnerability(BaseModel):
     severity: str  # HIGH, MEDIUM, LOW
@@ -26,6 +27,28 @@ class AIFix(BaseModel):
     why_fix_works: str
     best_practices: list[str] = []
     confidence_score: int
+
+    @field_validator('fixed_code', mode='before')
+    @classmethod
+    def validate_fixed_code(cls, v: Any) -> str:
+        if isinstance(v, dict):
+            for key in ["code", "corrected_code", "fixed_code"]:
+                if key in v and isinstance(v[key], str):
+                    return v[key]
+            try:
+                import json
+                return json.dumps(v, indent=2)
+            except Exception:
+                return str(v)
+        if v is None:
+            return ""
+        if not isinstance(v, str):
+            try:
+                import json
+                return json.dumps(v, indent=2)
+            except Exception:
+                return str(v)
+        return v
 
 class ReportBase(BaseModel):
     summary: str

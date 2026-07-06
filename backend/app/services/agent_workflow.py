@@ -221,6 +221,27 @@ class AgentWorkflow:
                     snippet=f["snippet"],
                     issue_description=f["description"]
                 )
+                corrected = res.get("corrected_code", f["snippet"])
+                if isinstance(corrected, dict):
+                    extracted = None
+                    for key in ["code", "corrected_code", "fixed_code"]:
+                        if key in corrected and isinstance(corrected[key], str):
+                            extracted = corrected[key]
+                            break
+                    if extracted is None:
+                        try:
+                            extracted = json.dumps(corrected, indent=2)
+                        except Exception:
+                            extracted = str(corrected)
+                    corrected = extracted
+                elif corrected is None:
+                    corrected = f["snippet"]
+                elif not isinstance(corrected, str):
+                    try:
+                        corrected = json.dumps(corrected, indent=2)
+                    except Exception:
+                        corrected = str(corrected)
+
                 return {
                     "file_path": f["file_path"],
                     "line_number": f["line_number"],
@@ -229,7 +250,7 @@ class AgentWorkflow:
                     "root_cause": res.get("root_cause", "N/A"),
                     "explanation": res.get("explanation", "N/A"),
                     "before_code": f["snippet"],
-                    "fixed_code": res.get("corrected_code", f["snippet"]),
+                    "fixed_code": corrected,
                     "why_fix_works": res.get("why_fix_works") or res.get("explanation") or "Corrects invalid code pattern.",
                     "best_practices": res.get("best_practices", []),
                     "confidence_score": res.get("confidence_score", 85)
