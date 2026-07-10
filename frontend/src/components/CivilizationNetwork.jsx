@@ -64,7 +64,7 @@ export default function CivilizationNetwork() {
     return (
       <div style={{ textAlign: 'center', padding: '100px 0', color: 'var(--text-muted)' }}>
         <Loader2 className="animate-spin" size={36} style={{ color: 'var(--accent-color)', marginBottom: '16px' }} />
-        <p style={{ fontSize: '15px' }}>Retrieving civilization network topology...</p>
+        <p style={{ fontSize: '15px' }}>Retrieving agent network topology...</p>
       </div>
     );
   }
@@ -83,7 +83,7 @@ export default function CivilizationNetwork() {
   return (
     <div style={{ display: 'flex', flexDirection: 'column', gap: '30px' }}>
       
-      {/* Civilization Overview Jumbotron */}
+      {/* Agent Network Overview Jumbotron */}
       <div className="glass-card" style={{
         padding: '32px',
         background: 'linear-gradient(135deg, rgba(30,41,59,0.9) 0%, rgba(15,23,42,0.95) 100%)',
@@ -97,7 +97,7 @@ export default function CivilizationNetwork() {
         <div>
           <div style={{ display: 'flex', alignItems: 'center', gap: '12px', marginBottom: '8px' }}>
             <Network size={28} style={{ color: 'var(--accent-color)' }} />
-            <h2 style={{ margin: 0, fontSize: '24px', fontWeight: '700', color: '#fff' }}>Global AI Civilization</h2>
+            <h2 style={{ margin: 0, fontSize: '24px', fontWeight: '700', color: '#fff' }}>Global Agent Network</h2>
           </div>
           <p style={{ color: 'var(--text-secondary)', fontSize: '14px', margin: 0 }}>
             Operating system orchestrating secure workspace collaborations, standards replication, and unified analytics.
@@ -166,7 +166,7 @@ export default function CivilizationNetwork() {
           {/* Shared Policy registry list */}
           <div className="glass-card" style={{ padding: '24px' }}>
             <h4 style={{ color: '#fff', fontSize: '15px', marginBottom: '16px', display: 'flex', alignItems: 'center', gap: '8px' }}>
-              <ShieldCheck size={16} style={{ color: 'var(--success-color)' }} /> Civilization Policy Registry
+              <ShieldCheck size={16} style={{ color: 'var(--success-color)' }} /> Agent Policy Registry
             </h4>
             <div style={{ display: 'flex', flexDirection: 'column', gap: '12px' }}>
               {networkData.shared_policy_registry.map((reg, idx) => (

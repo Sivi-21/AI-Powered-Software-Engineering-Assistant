@@ -40,9 +40,9 @@ export default function GitAnalyzeArea({ onAnalysisSuccess }) {
   };
 
   return (
-    <div className="glass-card" style={{ padding: '20px' }}>
-      <h3 style={{ margin: '0 0 8px 0', fontSize: '16px', fontWeight: '600', display: 'flex', alignItems: 'center', gap: '8px' }}>
-        <GitBranch size={18} style={{ color: 'var(--accent-color)' }} />
+    <div className="premium-card">
+      <h3 style={{ margin: '0 0 8px 0', fontSize: '15px', fontWeight: '600', display: 'flex', alignItems: 'center', gap: '8px' }}>
+        <GitBranch size={16} style={{ color: 'var(--text-secondary)' }} />
         Analyze Git Repository
       </h3>
       <p style={{ color: 'var(--text-secondary)', margin: '0 0 16px 0', fontSize: '13px', lineHeight: '1.4' }}>
@@ -57,18 +57,6 @@ export default function GitAnalyzeArea({ onAnalysisSuccess }) {
             onChange={(e) => setRepoUrl(e.target.value)}
             disabled={loading}
             placeholder="https://github.com/user/repository"
-            style={{
-              width: '100%',
-              padding: '10px 12px',
-              borderRadius: '8px',
-              background: 'rgba(10, 9, 21, 0.6)',
-              border: '1px solid var(--border-color)',
-              color: 'var(--text-primary)',
-              outline: 'none',
-              fontSize: '13px',
-              transition: 'border-color 0.2s',
-              boxSizing: 'border-box'
-            }}
           />
         </div>
 
@@ -78,10 +66,10 @@ export default function GitAnalyzeArea({ onAnalysisSuccess }) {
             alignItems: 'flex-start',
             gap: '8px',
             padding: '10px 12px',
-            background: 'rgba(239, 68, 68, 0.1)',
-            border: '1px solid rgba(239, 68, 68, 0.3)',
+            background: 'rgba(244, 63, 94, 0.05)',
+            border: '1px solid rgba(244, 63, 94, 0.15)',
             color: 'var(--danger-color)',
-            borderRadius: '8px',
+            borderRadius: '6px',
             fontSize: '12px',
             lineHeight: '1.4'
           }}>
@@ -96,15 +84,7 @@ export default function GitAnalyzeArea({ onAnalysisSuccess }) {
           disabled={loading || !repoUrl.trim()}
           style={{ 
             width: '100%', 
-            justifyContent: 'center',
-            cursor: loading ? 'not-allowed' : 'pointer',
-            opacity: loading ? 0.7 : 1,
-            padding: '10px',
-            fontSize: '13px',
-            boxSizing: 'border-box',
-            display: 'flex',
-            alignItems: 'center',
-            gap: '8px'
+            justifyContent: 'center'
           }}
         >
           {loading ? (

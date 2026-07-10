@@ -1,5 +1,5 @@
 import React from 'react';
-import { Shield, BarChart2, Calendar, FolderGit, Trash2, ArrowRight, AlertCircle } from 'lucide-react';
+import { Shield, Calendar, FolderGit, Trash2, ArrowRight, AlertCircle } from 'lucide-react';
 import { deleteProject } from '../api';
 
 export default function RepositoryCard({ project, report, onSelect, onDelete }) {
@@ -13,7 +13,7 @@ export default function RepositoryCard({ project, report, onSelect, onDelete }) 
 
   const getScoreColor = (val) => {
     if (val >= 85) return 'var(--success-color)';
-    if (val >= 70) return 'var(--accent-color)';
+    if (val >= 70) return 'var(--info-color)';
     if (val >= 50) return 'var(--warning-color)';
     return 'var(--danger-color)';
   };
@@ -45,10 +45,10 @@ export default function RepositoryCard({ project, report, onSelect, onDelete }) 
     : 'Unknown Date';
 
   return (
-    <div className="glass-card" style={{
+    <div className="premium-card" style={{
       display: 'flex',
       flexDirection: 'column',
-      minHeight: '230px',
+      minHeight: '210px',
       padding: '20px',
       position: 'relative',
       justifyContent: 'space-between'
@@ -60,7 +60,7 @@ export default function RepositoryCard({ project, report, onSelect, onDelete }) 
           <div style={{ minWidth: 0, flex: 1 }}>
             <h4 style={{
               margin: '0 0 4px 0',
-              fontSize: '16px',
+              fontSize: '15px',
               fontWeight: '600',
               color: '#fff',
               overflow: 'hidden',
@@ -70,23 +70,23 @@ export default function RepositoryCard({ project, report, onSelect, onDelete }) 
               alignItems: 'center',
               gap: '6px'
             }}>
-              <FolderGit size={16} style={{ color: 'var(--accent-color)', flexShrink: 0 }} />
-              <span style={{ textOverflow: 'ellipsis', overflow: 'hidden', whiteSpace: 'nowrap' }}>
+              <FolderGit size={14} style={{ color: 'var(--text-secondary)', flexShrink: 0 }} />
+              <span style={{ textOverflow: 'ellipsis', overflow: 'hidden', whiteSpace: 'nowrap', letterSpacing: '-0.01em' }}>
                 {project.repository_name || project.name}
               </span>
             </h4>
             <span style={{
-              background: 'rgba(59, 130, 246, 0.06)',
-              border: '1px solid rgba(59, 130, 246, 0.15)',
-              color: '#93C5FD',
-              padding: '3px 8px',
+              background: '#27272a',
+              border: '1px solid #3f3f46',
+              color: 'var(--text-primary)',
+              padding: '2px 6px',
               borderRadius: '4px',
-              fontSize: '11px',
+              fontSize: '10px',
               fontWeight: '500',
               display: 'inline-flex',
               alignItems: 'center',
               gap: '4px',
-              marginTop: '6px'
+              marginTop: '4px'
             }}>
               {getStackText()}
             </span>
@@ -95,34 +95,33 @@ export default function RepositoryCard({ project, report, onSelect, onDelete }) 
           {/* Code quality score indicator */}
           {project.status === "completed" ? (
             <div style={{
-              background: 'rgba(255, 255, 255, 0.02)',
-              border: `2px solid ${getScoreColor(score)}`,
-              width: '42px',
-              height: '42px',
+              background: 'transparent',
+              border: `1px solid var(--border-color)`,
+              width: '36px',
+              height: '36px',
               borderRadius: '50%',
               display: 'flex',
               alignItems: 'center',
               justifyContent: 'center',
-              fontSize: '13px',
-              fontWeight: '800',
+              fontSize: '12px',
+              fontWeight: '600',
               color: getScoreColor(score),
-              flexShrink: 0,
-              boxShadow: `0 0 12px ${getScoreColor(score)}20`
+              flexShrink: 0
             }}>
               {score}
             </div>
           ) : (
             <div style={{
-              background: 'rgba(255, 255, 255, 0.02)',
-              border: '1px dashed var(--text-muted)',
-              width: '42px',
-              height: '42px',
+              background: 'transparent',
+              border: '1px dashed var(--border-color)',
+              width: '36px',
+              height: '36px',
               borderRadius: '50%',
               display: 'flex',
               alignItems: 'center',
               justifyContent: 'center',
-              fontSize: '13px',
-              fontWeight: '800',
+              fontSize: '12px',
+              fontWeight: '600',
               color: 'var(--text-muted)',
               flexShrink: 0
             }}>
@@ -133,50 +132,17 @@ export default function RepositoryCard({ project, report, onSelect, onDelete }) 
 
         {/* Security findings breakdown */}
         {project.status === "completed" ? (
-          <div style={{ display: 'flex', gap: '8px', flexWrap: 'wrap', margin: '16px 0' }}>
-            <div style={{
-              display: 'flex',
-              alignItems: 'center',
-              gap: '4px',
-              background: 'rgba(239, 68, 68, 0.08)',
-              border: '1px solid rgba(239, 68, 68, 0.18)',
-              padding: '4px 8px',
-              borderRadius: '6px',
-              color: '#FCA5A5',
-              fontSize: '11px',
-              fontWeight: '600'
-            }}>
-              <Shield size={12} style={{ color: 'var(--danger-color)' }} />
+          <div style={{ display: 'flex', gap: '6px', flexWrap: 'wrap', margin: '12px 0' }}>
+            <div className="badge-critical" style={{ display: 'flex', alignItems: 'center', gap: '4px', padding: '2px 6px', fontSize: '10px' }}>
+              <Shield size={10} />
               <span>{highVulns.length + criticalVulns.length} High</span>
             </div>
-            <div style={{
-              display: 'flex',
-              alignItems: 'center',
-              gap: '4px',
-              background: 'rgba(245, 158, 11, 0.08)',
-              border: '1px solid rgba(245, 158, 11, 0.18)',
-              padding: '4px 8px',
-              borderRadius: '6px',
-              color: '#FDE047',
-              fontSize: '11px',
-              fontWeight: '600'
-            }}>
-              <Shield size={12} style={{ color: 'var(--warning-color)' }} />
+            <div className="badge-high" style={{ display: 'flex', alignItems: 'center', gap: '4px', padding: '2px 6px', fontSize: '10px' }}>
+              <Shield size={10} />
               <span>{medVulns.length} Med</span>
             </div>
-            <div style={{
-              display: 'flex',
-              alignItems: 'center',
-              gap: '4px',
-              background: 'rgba(34, 197, 94, 0.08)',
-              border: '1px solid rgba(34, 197, 94, 0.18)',
-              padding: '4px 8px',
-              borderRadius: '6px',
-              color: '#86EFAC',
-              fontSize: '11px',
-              fontWeight: '600'
-            }}>
-              <Shield size={12} style={{ color: 'var(--success-color)' }} />
+            <div className="badge-low" style={{ display: 'flex', alignItems: 'center', gap: '4px', padding: '2px 6px', fontSize: '10px' }}>
+              <Shield size={10} />
               <span>{lowVulns.length} Low</span>
             </div>
           </div>
@@ -185,18 +151,18 @@ export default function RepositoryCard({ project, report, onSelect, onDelete }) 
             display: 'flex',
             alignItems: 'center',
             gap: '8px',
-            background: 'rgba(239, 68, 68, 0.06)',
-            border: '1px solid rgba(239, 68, 68, 0.15)',
-            padding: '8px 12px',
-            borderRadius: '8px',
-            margin: '16px 0',
-            color: '#FCA5A5',
+            background: 'rgba(244, 63, 94, 0.04)',
+            border: '1px solid rgba(244, 63, 94, 0.15)',
+            padding: '6px 10px',
+            borderRadius: '6px',
+            margin: '12px 0',
+            color: '#fca5a5',
             fontSize: '11px',
             textOverflow: 'ellipsis',
             overflow: 'hidden',
             whiteSpace: 'nowrap'
           }}>
-            <AlertCircle size={14} style={{ color: 'var(--danger-color)', flexShrink: 0 }} />
+            <AlertCircle size={12} style={{ color: 'var(--danger-color)', flexShrink: 0 }} />
             <span style={{ textOverflow: 'ellipsis', overflow: 'hidden', whiteSpace: 'nowrap' }}>
               Failed: {project.error_message || "Unknown error"}
             </span>
@@ -206,28 +172,28 @@ export default function RepositoryCard({ project, report, onSelect, onDelete }) 
             display: 'flex',
             flexDirection: 'column',
             gap: '4px',
-            background: 'rgba(59, 130, 246, 0.06)',
-            border: '1px solid rgba(59, 130, 246, 0.15)',
-            padding: '8px 12px',
-            borderRadius: '8px',
-            margin: '16px 0',
-            color: '#93C5FD',
+            background: 'var(--bg-primary)',
+            border: '1px solid var(--border-color)',
+            padding: '6px 10px',
+            borderRadius: '6px',
+            margin: '12px 0',
+            color: 'var(--text-secondary)',
             fontSize: '11px'
           }}>
             <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
               <span className="animate-spin" style={{
                 display: 'inline-block',
-                width: '12px',
-                height: '12px',
-                border: '2px solid var(--accent-color)',
+                width: '10px',
+                height: '10px',
+                border: '1.5px solid var(--text-primary)',
                 borderTopColor: 'transparent',
                 borderRadius: '50%',
                 flexShrink: 0
               }} />
-              <span>Workflow running: <strong style={{ textTransform: 'uppercase', color: 'var(--accent-color)' }}>{project.status}</strong></span>
+              <span>Running: <span style={{ textTransform: 'uppercase', fontWeight: '500' }}>{project.status}</span></span>
             </div>
             {project.current_progress && (
-              <div style={{ marginLeft: '20px', fontSize: '10px', color: 'var(--text-muted)', fontStyle: 'italic' }}>
+              <div style={{ marginLeft: '18px', fontSize: '10px', color: 'var(--text-muted)', fontStyle: 'italic' }}>
                 ↳ {project.current_progress}
               </div>
             )}
@@ -240,17 +206,17 @@ export default function RepositoryCard({ project, report, onSelect, onDelete }) 
         display: 'flex',
         justifyContent: 'space-between',
         alignItems: 'center',
-        marginTop: '12px',
-        borderTop: '1px solid rgba(255,255,255,0.05)',
-        paddingTop: '12px',
+        marginTop: '8px',
+        borderTop: '1px solid var(--border-color)',
+        paddingTop: '10px',
         width: '100%'
       }}>
         <div style={{ display: 'flex', alignItems: 'center', gap: '4px', fontSize: '11px', color: 'var(--text-muted)' }}>
-          <Calendar size={12} />
+          <Calendar size={10} />
           <span>{formattedDate}</span>
         </div>
 
-        <div style={{ display: 'flex', gap: '8px', alignItems: 'center' }}>
+        <div style={{ display: 'flex', gap: '6px', alignItems: 'center' }}>
           <button
             onClick={handleDelete}
             style={{
@@ -259,17 +225,17 @@ export default function RepositoryCard({ project, report, onSelect, onDelete }) 
               color: 'var(--text-muted)',
               cursor: 'pointer',
               padding: '6px',
-              borderRadius: '6px',
+              borderRadius: '4px',
               display: 'flex',
               alignItems: 'center',
               justifyContent: 'center',
-              transition: 'all 0.2s'
+              transition: 'all 0.15s ease'
             }}
             onMouseEnter={(e) => e.currentTarget.style.color = 'var(--danger-color)'}
             onMouseLeave={(e) => e.currentTarget.style.color = 'var(--text-muted)'}
             title="Delete Project"
           >
-            <Trash2 size={14} />
+            <Trash2 size={12} />
           </button>
           
           {project.status === "completed" && (
@@ -277,16 +243,16 @@ export default function RepositoryCard({ project, report, onSelect, onDelete }) 
               onClick={onSelect}
               className="btn-primary"
               style={{
-                padding: '6px 12px',
+                padding: '4px 10px',
                 fontSize: '11px',
-                borderRadius: '6px',
+                borderRadius: '4px',
                 display: 'flex',
                 alignItems: 'center',
                 gap: '4px'
               }}
             >
               Open Report
-              <ArrowRight size={12} />
+              <ArrowRight size={10} />
             </button>
           )}
         </div>

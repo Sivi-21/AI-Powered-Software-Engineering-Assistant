@@ -45,7 +45,7 @@ export default function UniversalBrain() {
       setActiveDecision(result);
       setQueryInput("");
     } catch (err) {
-      alert("Brain decision failed: " + err.message);
+      alert("Orchestration query failed: " + err.message);
     } finally {
       setLoading(false);
     }
@@ -56,7 +56,7 @@ export default function UniversalBrain() {
       
       {/* Sidebar - Decisions History */}
       <div className="glass-card" style={{ padding: '16px', display: 'flex', flexDirection: 'column', gap: '16px', overflowY: 'auto' }}>
-        <h4 style={{ color: '#fff', fontSize: '13px', margin: 0, textTransform: 'uppercase', letterSpacing: '0.5px' }}>Brain Decisions</h4>
+        <h4 style={{ color: '#fff', fontSize: '13px', margin: 0, textTransform: 'uppercase', letterSpacing: '0.5px' }}>Agent Activity</h4>
         <div style={{ display: 'flex', flexDirection: 'column', gap: '8px' }}>
           {decisions.map(d => {
             const isActive = activeDecision?.id === d.id;
@@ -99,7 +99,7 @@ export default function UniversalBrain() {
           <form onSubmit={handleQuery} style={{ display: 'flex', gap: '12px' }}>
             <input
               type="text"
-              placeholder="Query the Universal AI Engineering Brain (e.g. Evaluate migration risk to FastAPI async models)..."
+              placeholder="Query the Agent Orchestrator (e.g. Evaluate migration risk to FastAPI async models)..."
               value={queryInput}
               onChange={(e) => setQueryInput(e.target.value)}
               disabled={loading}
@@ -120,7 +120,7 @@ export default function UniversalBrain() {
               className="btn-primary"
               style={{ display: 'flex', alignItems: 'center', gap: '8px', padding: '0 20px' }}
             >
-              {loading ? <span>Reasoning...</span> : <><BrainCircuit size={14} /> <span>Ask Brain</span></>}
+              {loading ? <span>Reasoning...</span> : <><BrainCircuit size={14} /> <span>Query Orchestrator</span></>}
             </button>
           </form>
         </div>
@@ -132,7 +132,7 @@ export default function UniversalBrain() {
               {/* Header metrics */}
               <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', borderBottom: '1px solid var(--border-color)', paddingBottom: '16px', flexWrap: 'wrap', gap: '12px' }}>
                 <div>
-                  <span style={{ fontSize: '11px', color: 'var(--text-secondary)', textTransform: 'uppercase' }}>Central Decision System</span>
+                  <span style={{ fontSize: '11px', color: 'var(--text-secondary)', textTransform: 'uppercase' }}>Central Orchestration System</span>
                   <h3 style={{ margin: '4px 0 0 0', color: '#fff', fontSize: '16px' }}>{activeDecision.query}</h3>
                 </div>
                 <div style={{ display: 'flex', gap: '20px' }}>

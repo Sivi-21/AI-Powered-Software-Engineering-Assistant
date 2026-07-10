@@ -1,7 +1,7 @@
-const API_BASE_URL = "http://127.0.0.1:8000/api/v1";
+const API_BASE_URL = import.meta.env.VITE_API_URL || "/api/v1";
 
 function getHeaders(extraHeaders = {}) {
-  const token = localStorage.getItem("token");
+  const token = localStorage.getItem("codesphere_jwt") || localStorage.getItem("token");
   const headers = { ...extraHeaders };
   if (token) {
     headers["Authorization"] = `Bearer ${token}`;
@@ -42,7 +42,7 @@ export async function signupUser({ name, email, organization, password }) {
 }
 
 export async function getProfile() {
-  const token = localStorage.getItem("token");
+  const token = localStorage.getItem("codesphere_jwt") || localStorage.getItem("token");
   if (!token) throw new Error("No token found");
   
   const response = await fetch(`${API_BASE_URL}/auth/me`, {
@@ -236,6 +236,25 @@ export async function loginWithGithub(code) {
   }
 
   return response.json();
+}
+
+export async function loginWithGoogle(idToken) {
+  const response = await fetch(`${API_BASE_URL}/auth/google`, {
+    method: "POST",
+    headers: {
+      "Content-Type": "application/json",
+    },
+    body: JSON.stringify({ id_token: idToken }),
+  });
+
+  if (!response.ok) {
+    const errorData = await response.json();
+    throw new Error(errorData.detail || "Failed to log in with Google.");
+  }
+
+  const data = await response.json();
+  localStorage.setItem("token", data.access_token);
+  return data;
 }
 
 export async function listPlans() {

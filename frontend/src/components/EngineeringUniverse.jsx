@@ -33,7 +33,7 @@ export default function EngineeringUniverse({ project }) {
         setSelectedNode(data.nodes[0]);
       }
     } catch (err) {
-      setError(err.message || "Failed to load engineering universe.");
+      setError(err.message || "Failed to load architecture mapping.");
     } finally {
       setLoading(false);
     }
@@ -44,14 +44,14 @@ export default function EngineeringUniverse({ project }) {
   }, [project?.id]);
 
   const handleClear = async () => {
-    if (!confirm("Are you sure you want to clear this universe blueprint? It will recompile on next load.")) return;
+    if (!confirm("Are you sure you want to clear this architecture mapping? It will recompile on next load.")) return;
     try {
       const orgId = "org-enterprise-01";
       await clearEngineeringUniverse(orgId);
       setUniverseData(null);
       setSelectedNode(null);
     } catch (err) {
-      alert("Failed to clear universe: " + err.message);
+      alert("Failed to clear architecture map: " + err.message);
     }
   };
 
@@ -59,7 +59,7 @@ export default function EngineeringUniverse({ project }) {
     return (
       <div style={{ textAlign: 'center', padding: '100px 0', color: 'var(--text-muted)' }}>
         <Loader2 className="animate-spin" size={36} style={{ color: 'var(--accent-color)', marginBottom: '16px' }} />
-        <p style={{ fontSize: '15px' }}>Compiling corporate engineering universe...</p>
+        <p style={{ fontSize: '15px' }}>Compiling corporate architecture map...</p>
       </div>
     );
   }
@@ -69,7 +69,7 @@ export default function EngineeringUniverse({ project }) {
       <div className="glass-card" style={{ borderLeft: '4px solid var(--danger-color)', padding: '24px' }}>
         <div style={{ display: 'flex', gap: '12px', alignItems: 'center', color: 'var(--danger-color)', marginBottom: '16px' }}>
           <AlertCircle size={24} />
-          <h3 style={{ margin: 0 }}>Failed to Compile Engineering Universe</h3>
+          <h3 style={{ margin: 0 }}>Failed to Compile Architecture Map</h3>
         </div>
         <p style={{ color: 'var(--text-secondary)', fontSize: '14px', marginBottom: '16px' }}>{error}</p>
         <button onClick={loadUniverse} className="btn-primary">Retry Compilation</button>
@@ -153,7 +153,7 @@ export default function EngineeringUniverse({ project }) {
         <div className="glass-card" style={{ padding: '24px' }}>
           <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '20px', flexWrap: 'wrap', gap: '12px' }}>
             <div>
-              <h3 style={{ margin: '0 0 6px 0', fontSize: '18px', color: '#fff' }}>Engineering Universe</h3>
+              <h3 style={{ margin: '0 0 6px 0', fontSize: '18px', color: '#fff' }}>Architecture Map</h3>
               <span style={{ fontSize: '12px', color: 'var(--text-secondary)' }}>{universeData.summary}</span>
             </div>
             <button onClick={handleClear} className="btn-secondary" style={{ display: 'flex', alignItems: 'center', gap: '6px', fontSize: '12px' }}>

@@ -1,11 +1,11 @@
 import React, { useEffect, useState } from 'react';
-import { Settings, Server, ShieldCheck, Database, Info, Cpu, BarChart3, Palette } from 'lucide-react';
+import { Settings, Server, Database, Info, Cpu, BarChart3, Palette } from 'lucide-react';
 
 export default function SettingsView() {
   const [dbStatus, setDbStatus] = useState("Checking...");
-  const [backendUrl] = useState("http://127.0.0.1:8001/api/v1");
+  const [backendUrl] = useState(import.meta.env.VITE_API_URL || "/api/v1");
   const [activeAccent, setActiveAccent] = useState(() => {
-    return localStorage.getItem('saas-accent') || 'blue';
+    return localStorage.getItem('saas-accent') || 'white';
   });
 
   useEffect(() => {
@@ -31,18 +31,18 @@ export default function SettingsView() {
     localStorage.setItem('saas-accent', theme);
 
     if (theme === 'purple') {
-      root.style.setProperty('--accent-color', '#A855F7');
-      root.style.setProperty('--accent-glow', 'rgba(168, 85, 247, 0.3)');
+      root.style.setProperty('--accent-color', '#818cf8');
+      root.style.setProperty('--accent-hover', '#6366f1');
     } else if (theme === 'emerald') {
-      root.style.setProperty('--accent-color', '#10B981');
-      root.style.setProperty('--accent-glow', 'rgba(16, 185, 129, 0.3)');
+      root.style.setProperty('--accent-color', '#10b981');
+      root.style.setProperty('--accent-hover', '#059669');
     } else if (theme === 'amber') {
-      root.style.setProperty('--accent-color', '#F59E0B');
-      root.style.setProperty('--accent-glow', 'rgba(245, 158, 11, 0.3)');
+      root.style.setProperty('--accent-color', '#f59e0b');
+      root.style.setProperty('--accent-hover', '#d97706');
     } else {
-      // Default Blue
-      root.style.setProperty('--accent-color', '#3B82F6');
-      root.style.setProperty('--accent-glow', 'rgba(59, 130, 246, 0.3)');
+      // Default White
+      root.style.setProperty('--accent-color', '#ffffff');
+      root.style.setProperty('--accent-hover', '#e4e4e7');
     }
   };
 
@@ -52,32 +52,32 @@ export default function SettingsView() {
   }, []);
 
   const themeOptions = [
-    { id: 'blue', name: 'Cyber Blue', color: '#3B82F6' },
-    { id: 'purple', name: 'Neon Purple', color: '#A855F7' },
-    { id: 'emerald', name: 'Emerald Mint', color: '#10B981' },
-    { id: 'amber', name: 'Sunset Amber', color: '#F59E0B' }
+    { id: 'white', name: 'Sleek White', color: '#ffffff' },
+    { id: 'purple', name: 'Indigo Aura', color: '#818cf8' },
+    { id: 'emerald', name: 'Emerald', color: '#10b981' },
+    { id: 'amber', name: 'Amber Glow', color: '#f59e0b' }
   ];
 
   return (
-    <div style={{ display: 'flex', flexDirection: 'column', gap: '24px' }}>
-      <div style={{ display: 'flex', alignItems: 'center', gap: '8px', color: 'var(--text-secondary)' }}>
-        <Settings size={22} />
-        <h3 style={{ margin: 0, fontSize: '20px', fontWeight: '600' }}>SaaS Portal & Config Settings</h3>
+    <div style={{ display: 'flex', flexDirection: 'column', gap: '20px' }}>
+      <div style={{ display: 'flex', alignItems: 'center', gap: '8px', color: 'var(--text-primary)' }}>
+        <Settings size={16} />
+        <h3 style={{ margin: 0, fontSize: '15px', fontWeight: '600', letterSpacing: '-0.01em' }}>SaaS Portal & Config Settings</h3>
       </div>
 
       <div className="grid-cols-2">
         {/* Connection card */}
-        <div className="glass-card" style={{ display: 'flex', flexDirection: 'column', gap: '16px' }}>
-          <div style={{ display: 'flex', alignItems: 'center', gap: '8px', color: 'var(--accent-color)' }}>
-            <Server size={18} />
-            <h4 style={{ margin: 0, fontSize: '15px', fontWeight: '600' }}>Backend Pipeline Link</h4>
+        <div className="premium-card" style={{ display: 'flex', flexDirection: 'column', gap: '12px' }}>
+          <div style={{ display: 'flex', alignItems: 'center', gap: '8px', color: 'var(--text-primary)' }}>
+            <Server size={14} />
+            <h4 style={{ margin: 0, fontSize: '13px', fontWeight: '600' }}>Backend Pipeline Link</h4>
           </div>
-          <div style={{ display: 'flex', flexDirection: 'column', gap: '12px', fontSize: '13px' }}>
-            <div style={{ display: 'flex', justifyContent: 'space-between', borderBottom: '1px solid rgba(255,255,255,0.03)', paddingBottom: '8px' }}>
+          <div style={{ display: 'flex', flexDirection: 'column', gap: '10px', fontSize: '13px' }}>
+            <div style={{ display: 'flex', justifyContent: 'space-between', borderBottom: '1px solid var(--border-color)', paddingBottom: '6px' }}>
               <span style={{ color: 'var(--text-secondary)' }}>API Base URL</span>
-              <code style={{ color: 'var(--accent-color)', fontFamily: 'Consolas, monospace' }}>{backendUrl}</code>
+              <code style={{ color: 'var(--text-primary)' }}>{backendUrl}</code>
             </div>
-            <div style={{ display: 'flex', justifyContent: 'space-between', borderBottom: '1px solid rgba(255,255,255,0.03)', paddingBottom: '8px' }}>
+            <div style={{ display: 'flex', justifyContent: 'space-between', borderBottom: '1px solid var(--border-color)', paddingBottom: '6px' }}>
               <span style={{ color: 'var(--text-secondary)' }}>Service Health</span>
               <span style={{ 
                 fontWeight: '600', 
@@ -94,34 +94,34 @@ export default function SettingsView() {
         </div>
 
         {/* Dynamic theme switcher */}
-        <div className="glass-card" style={{ display: 'flex', flexDirection: 'column', gap: '16px' }}>
-          <div style={{ display: 'flex', alignItems: 'center', gap: '8px', color: 'var(--accent-color)' }}>
-            <Palette size={18} />
-            <h4 style={{ margin: 0, fontSize: '15px', fontWeight: '600' }}>Personalize Accent Theme</h4>
+        <div className="premium-card" style={{ display: 'flex', flexDirection: 'column', gap: '12px' }}>
+          <div style={{ display: 'flex', alignItems: 'center', gap: '8px', color: 'var(--text-primary)' }}>
+            <Palette size={14} />
+            <h4 style={{ margin: 0, fontSize: '13px', fontWeight: '600' }}>Personalize Accent Theme</h4>
           </div>
-          <p style={{ margin: 0, fontSize: '12px', color: 'var(--text-secondary)' }}>
+          <p style={{ margin: 0, fontSize: '12px', color: 'var(--text-secondary)', lineHeight: '1.4' }}>
             Customize your portal brand colors instantly (changes apply globally across all views).
           </p>
-          <div style={{ display: 'flex', gap: '10px', flexWrap: 'wrap' }}>
+          <div style={{ display: 'flex', gap: '8px', flexWrap: 'wrap' }}>
             {themeOptions.map((opt) => (
               <button
                 key={opt.id}
                 onClick={() => changeAccent(opt.id)}
                 style={{
-                  background: activeAccent === opt.id ? 'rgba(255,255,255,0.03)' : 'transparent',
-                  border: `1px solid ${activeAccent === opt.id ? 'var(--accent-color)' : 'var(--border-color)'}`,
-                  color: activeAccent === opt.id ? 'var(--text-primary)' : 'var(--text-secondary)',
-                  padding: '8px 12px',
+                  background: activeAccent === opt.id ? 'var(--bg-primary)' : 'transparent',
+                  border: `1px solid ${activeAccent === opt.id ? 'var(--text-primary)' : 'var(--border-color)'}`,
+                  color: 'var(--text-primary)',
+                  padding: '6px 10px',
                   borderRadius: '6px',
                   cursor: 'pointer',
                   fontSize: '12px',
                   display: 'flex',
                   alignItems: 'center',
                   gap: '6px',
-                  transition: 'all 0.2s'
+                  transition: 'all 0.15s ease'
                 }}
               >
-                <span style={{ width: '10px', height: '10px', borderRadius: '50%', background: opt.color }} />
+                <span style={{ width: '8px', height: '8px', borderRadius: '50%', background: opt.color }} />
                 {opt.name}
               </button>
             ))}
@@ -130,43 +130,43 @@ export default function SettingsView() {
       </div>
 
       {/* SaaS Usage analytics metrics */}
-      <div className="glass-card">
-        <div style={{ display: 'flex', alignItems: 'center', gap: '8px', marginBottom: '20px', color: 'var(--accent-color)' }}>
-          <BarChart3 size={18} />
-          <h4 style={{ margin: 0, fontSize: '15px', fontWeight: '600' }}>Developer Plan Usage Analytics</h4>
+      <div className="premium-card">
+        <div style={{ display: 'flex', alignItems: 'center', gap: '8px', marginBottom: '16px', color: 'var(--text-primary)' }}>
+          <BarChart3 size={14} />
+          <h4 style={{ margin: 0, fontSize: '13px', fontWeight: '600' }}>Developer Plan Usage Analytics</h4>
         </div>
-        <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(220px, 1fr))', gap: '20px' }}>
+        <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(220px, 1fr))', gap: '16px' }}>
           
           {/* Query quota */}
-          <div style={{ background: 'rgba(255,255,255,0.01)', padding: '16px', borderRadius: '8px', border: '1px solid var(--border-color)' }}>
-            <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: '12px', color: 'var(--text-secondary)', marginBottom: '8px' }}>
+          <div style={{ background: 'var(--bg-primary)', padding: '12px', borderRadius: '6px', border: '1px solid var(--border-color)' }}>
+            <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: '12px', color: 'var(--text-secondary)', marginBottom: '6px' }}>
               <span>Monthly Query Limit</span>
               <span>87%</span>
             </div>
-            <div style={{ height: '6px', background: 'rgba(255,255,255,0.05)', borderRadius: '3px', overflow: 'hidden', marginBottom: '8px' }}>
+            <div style={{ height: '4px', background: '#27272a', borderRadius: '2px', overflow: 'hidden', marginBottom: '6px' }}>
               <div style={{ width: '87%', height: '100%', background: 'var(--accent-color)' }} />
             </div>
             <span style={{ fontSize: '11px', color: 'var(--text-muted)' }}>1,740 / 2,000 queries consumed</span>
           </div>
 
           {/* Token limits */}
-          <div style={{ background: 'rgba(255,255,255,0.01)', padding: '16px', borderRadius: '8px', border: '1px solid var(--border-color)' }}>
-            <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: '12px', color: 'var(--text-secondary)', marginBottom: '8px' }}>
+          <div style={{ background: 'var(--bg-primary)', padding: '12px', borderRadius: '6px', border: '1px solid var(--border-color)' }}>
+            <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: '12px', color: 'var(--text-secondary)', marginBottom: '6px' }}>
               <span>Embedding Token Quota</span>
               <span>42%</span>
             </div>
-            <div style={{ height: '6px', background: 'rgba(255,255,255,0.05)', borderRadius: '3px', overflow: 'hidden', marginBottom: '8px' }}>
+            <div style={{ height: '4px', background: '#27272a', borderRadius: '2px', overflow: 'hidden', marginBottom: '6px' }}>
               <div style={{ width: '42%', height: '100%', background: 'var(--success-color)' }} />
             </div>
             <span style={{ fontSize: '11px', color: 'var(--text-muted)' }}>4.2M / 10.0M tokens indexed</span>
           </div>
 
           {/* Average Latency */}
-          <div style={{ background: 'rgba(255,255,255,0.01)', padding: '16px', borderRadius: '8px', border: '1px solid var(--border-color)', display: 'flex', flexDirection: 'column', justifyContent: 'center' }}>
+          <div style={{ background: 'var(--bg-primary)', padding: '12px', borderRadius: '6px', border: '1px solid var(--border-color)', display: 'flex', flexDirection: 'column', justifyContent: 'center' }}>
             <div style={{ fontSize: '12px', color: 'var(--text-secondary)', marginBottom: '4px' }}>Average API Latency</div>
             <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
-              <span style={{ fontSize: '20px', fontWeight: '700', color: '#fff' }}>1.24s</span>
-              <span style={{ width: '8px', height: '8px', borderRadius: '50%', background: 'var(--success-color)', display: 'inline-block', boxShadow: '0 0 8px var(--success-color)' }} />
+              <span style={{ fontSize: '16px', fontWeight: '600', color: '#fff' }}>1.24s</span>
+              <span style={{ width: '6px', height: '6px', borderRadius: '50%', background: 'var(--success-color)', display: 'inline-block' }} />
             </div>
             <span style={{ fontSize: '11px', color: 'var(--text-muted)', marginTop: '4px' }}>Optimized via Groq LPU inference</span>
           </div>
@@ -175,24 +175,24 @@ export default function SettingsView() {
       </div>
 
       {/* Diagnostics Card */}
-      <div className="glass-card">
-        <div style={{ display: 'flex', alignItems: 'center', gap: '8px', marginBottom: '16px', color: 'var(--info-color)' }}>
-          <Cpu size={18} />
-          <h4 style={{ margin: 0, fontSize: '15px', fontWeight: '600' }}>AI Assistant Capabilities</h4>
+      <div className="premium-card">
+        <div style={{ display: 'flex', alignItems: 'center', gap: '8px', marginBottom: '12px', color: 'var(--text-primary)' }}>
+          <Cpu size={14} />
+          <h4 style={{ margin: 0, fontSize: '13px', fontWeight: '600' }}>AI Assistant Capabilities</h4>
         </div>
-        <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(200px, 1fr))', gap: '16px' }}>
-          <div style={{ display: 'flex', gap: '10px', alignItems: 'flex-start', background: 'rgba(255, 255, 255, 0.01)', padding: '12px', borderRadius: '8px' }}>
-            <Database size={16} style={{ color: 'var(--accent-color)', marginTop: '2px' }} />
+        <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(200px, 1fr))', gap: '12px' }}>
+          <div style={{ display: 'flex', gap: '10px', alignItems: 'flex-start', background: 'var(--bg-primary)', padding: '12px', borderRadius: '6px', border: '1px solid var(--border-color)' }}>
+            <Database size={14} style={{ color: 'var(--text-secondary)', marginTop: '2px' }} />
             <div>
               <strong style={{ fontSize: '13px', display: 'block', marginBottom: '4px' }}>Vector Database</strong>
-              <span style={{ fontSize: '12px', color: 'var(--text-secondary)' }}>ChromaDB persist block indexes codebase structure & comments locally.</span>
+              <span style={{ fontSize: '12px', color: 'var(--text-secondary)', lineHeight: '1.4' }}>ChromaDB persist block indexes codebase structure & comments locally.</span>
             </div>
           </div>
-          <div style={{ display: 'flex', gap: '10px', alignItems: 'flex-start', background: 'rgba(255, 255, 255, 0.01)', padding: '12px', borderRadius: '8px' }}>
-            <Info size={16} style={{ color: 'var(--success-color)', marginTop: '2px' }} />
+          <div style={{ display: 'flex', gap: '10px', alignItems: 'flex-start', background: 'var(--bg-primary)', padding: '12px', borderRadius: '6px', border: '1px solid var(--border-color)' }}>
+            <Info size={14} style={{ color: 'var(--text-secondary)', marginTop: '2px' }} />
             <div>
               <strong style={{ fontSize: '13px', display: 'block', marginBottom: '4px' }}>RAG Q&A Engine</strong>
-              <span style={{ fontSize: '12px', color: 'var(--text-secondary)' }}>Executes vector searches combined with LLM context prompts for specific responses.</span>
+              <span style={{ fontSize: '12px', color: 'var(--text-secondary)', lineHeight: '1.4' }}>Executes vector searches combined with LLM context prompts for specific responses.</span>
             </div>
           </div>
         </div>

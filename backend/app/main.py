@@ -14,6 +14,8 @@ from app.mongodb import connect_to_mongo, close_mongo_connection
 @asynccontextmanager
 async def lifespan(app: FastAPI):
     # Startup Events
+    settings.print_diagnostics()
+    settings.validate_required_env()
     setup_logging()
     await connect_to_mongo()
     yield
@@ -28,10 +30,11 @@ app = FastAPI(
 )
 
 # CORS Middleware Configuration
+origins = [o.strip() for o in settings.ALLOWED_ORIGINS.split(",") if o.strip()]
 app.add_middleware(
     CORSMiddleware,
-    allow_origins=["*"],  # Adjust this in production
-    allow_credentials=False,
+    allow_origins=origins,
+    allow_credentials=True,
     allow_methods=["*"],
     allow_headers=["*"],
 )

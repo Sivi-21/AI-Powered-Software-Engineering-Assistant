@@ -1,203 +1,158 @@
-# AI-Powered Software Engineering Assistant
+# CodeSphere AI - Enterprise Repository Intelligence Platform
 
-An intelligent platform designed to help developers and software teams analyze repositories, review code quality, detect vulnerabilities, and gain actionable insights using AI-driven workflows.
+CodeSphere AI is an intelligent software engineering platform designed to help developers and software teams analyze repositories, review code quality, detect vulnerabilities, map architectural digital twins, and gain actionable insights using AI-driven workflows at the speed of Groq LPU inference.
 
-## 🚀 Features
+---
+
+## 🚀 Key Modules & Features
 
 * 📂 **Repository Analysis**
-
-  * Analyze projects uploaded as ZIP files.
-  * Analyze public GitHub repositories directly using repository URLs.
+  * Process repository codebases uploaded as ZIP files (up to 50MB).
+  * Clone and analyze public GitHub repositories directly using repository URLs.
 
 * 🤖 **AI-Powered Code Reviews**
-
-  * Generate automated code review reports.
-  * Identify potential improvements and best practices.
+  * Generate detailed automated code review reports detailing code quality and syntax tree mappings.
+  * Identify code smells, duplicate code, and potential design improvements.
 
 * 🔒 **Security Vulnerability Detection**
+  * Audit code for common security issues (SQL injection, XSS, exposed tokens, etc.).
+  * Classify vulnerabilities by severity (High, Medium, Low) with actionable remediation.
 
-  * Detect common security issues within the codebase.
-  * Categorize vulnerabilities based on severity levels.
+* 🏗️ **Architecture & Dependency Mappings**
+  * Identify project structure, libraries, frameworks, and modules.
+  * Build interactive engineering universe maps.
 
-* 🏗️ **Architecture Analysis**
-
-  * Identify project structure, frameworks, and technologies used.
-  * Provide high-level architecture insights.
-
-* 📊 **Interactive Dashboard**
-
-  * Monitor analyzed repositories.
-  * View project health and generated reports in a centralized interface.
-
-* 💬 **RAG-Based Developer Assistant**
-
-  * Ask questions about your codebase.
-  * Retrieve context-aware answers from repository data.
+* 💬 **RAG Codebase Architect Q&A**
+  * Chat with your repository using semantic vector indexing (ChromaDB).
+  * Retrieve context-aware answers from your source code.
 
 * ⚡ **Multi-Agent Workflow**
+  * Coordinates multiple AI agents for architecture analysis, code auditing, security assessment, and report generation using LangGraph.
 
-  * Coordinate multiple AI agents for architecture analysis, code auditing, security assessment, and report generation.
-
-* 🌐 **GitHub Integration**
-
-  * Analyze repositories directly from GitHub.
-  * Track repository insights without manual uploads.
+* 🌐 **Integration & Identity**
+  * Secure JWT-based local authentication.
+  * Optional Google Sign-in (OAuth 2.0) with graceful fallback if unconfigured.
 
 ---
 
-## 🛠️ Tech Stack
+## 🛠️ Technology Stack
 
-### Frontend
-
-* React.js
-* Axios
-* Tailwind CSS
-* Lucide React
-
-### Backend
-
-* FastAPI
-* Python
-* LangGraph
-* LangChain
-
-### Databases & Storage
-
-* MongoDB
-* ChromaDB
-
-### AI Models
-
-* Groq
-* Google Gemini
-* OpenRouter (Optional)
-* GitHub Models (Optional)
+* **Frontend**: React.js, Tailwind CSS, Lucide React, Axios, `@react-oauth/google`
+* **Backend**: FastAPI (Python), LangGraph, LangChain, Uvicorn
+* **Database & Indexing**: MongoDB Atlas (Persistent Store), ChromaDB (Vector Store)
+* **LLM Engine**: Google Gemini API, Groq LPU API, OpenRouter, GitHub Models
 
 ---
 
-## 📌 Project Workflow
+## ⚙️ Environment Variables Configuration
 
-1. User uploads a ZIP file or provides a GitHub repository URL.
-2. The backend extracts and processes the repository contents.
-3. AI agents analyze:
+Create appropriate environment configuration files before starting the services.
 
-   * Project architecture
-   * Code quality
-   * Security vulnerabilities
-   * Improvement opportunities
-4. Reports are generated and stored.
-5. Results are displayed on the dashboard.
-6. Users can interact with the codebase through the RAG-powered assistant.
+### Frontend (`frontend/.env`)
+```env
+# API Endpoint URL (pointing to FastAPI backend)
+VITE_API_URL=http://localhost:8000/api/v1
+
+# Google OAuth Client ID (Optional; if left blank, Google login is disabled gracefully)
+VITE_GOOGLE_CLIENT_ID=your_google_client_id_here.apps.googleusercontent.com
+```
+
+### Backend (`backend/.env`)
+```env
+PROJECT_NAME="AI-Powered Software Engineering Assistant"
+API_V1_STR="/api/v1"
+
+# Allowed CORS Origins (Comma-separated list)
+# e.g., http://localhost:3000,http://localhost:5173,https://your-vercel-domain.vercel.app
+ALLOWED_ORIGINS=http://localhost:3000,http://localhost:5173
+
+# MongoDB Atlas URI (Required)
+MONGO_URI=mongodb+srv://<username>:<password>@<cluster>.mongodb.net/<database>?retryWrites=true&w=majority
+MONGO_DB_NAME=intellios_db
+
+# JWT Configuration (Required)
+# CRITICAL: Replace this secret key with a strong secure key in production
+JWT_SECRET=supersecretkey_change_me_in_prod
+JWT_ALGORITHM=HS256
+ACCESS_TOKEN_EXPIRE_MINUTES=1440
+
+# Google OAuth Configuration (Optional; Google Login will be disabled if omitted)
+GOOGLE_CLIENT_ID=your_google_client_id_here.apps.googleusercontent.com
+GOOGLE_CLIENT_SECRET=your_google_client_secret_here
+
+# GitHub Integration (Optional)
+GITHUB_CLIENT_ID=your_github_client_id_here
+GITHUB_CLIENT_SECRET=your_github_client_secret_here
+GITHUB_REDIRECT_URI=http://localhost:5173/oauth/callback
+
+# Gemini API Configuration (Required for agents)
+GEMINI_API_KEY=your_gemini_api_key_here
+
+# Groq API Configuration (Optional)
+GROQ_API_KEY=your_groq_api_key_here
+GROQ_MODEL=llama-3.3-70b-versatile
+```
 
 ---
 
-## ⚙️ Installation
+## 📦 Local Installation & Setup
 
-### Clone the Repository
-
+### 1. Clone the Repository
 ```bash
 git clone <repository-url>
 cd AI-Powered-Software-Engineering-Assistant
 ```
 
-### Backend Setup
-
+### 2. Backend Setup
 ```bash
 cd backend
+# Create virtual environment and install packages
+python -m venv venv
+source venv/bin/activate  # On Windows use: venv\Scripts\activate
 pip install -r requirements.txt
+
+# Run the dev server
 python -m uvicorn app.main:app --reload
 ```
+The API documentation will be available at [http://127.0.0.1:8000/docs](http://127.0.0.1:8000/docs).
 
-Backend will run at:
-
-```text
-http://127.0.0.1:8000
-```
-
-### Frontend Setup
-
+### 3. Frontend Setup
 ```bash
-cd frontend
+cd ../frontend
 npm install
-npm start
+npm run dev
 ```
-
-Frontend will run at:
-
-```text
-http://localhost:3000
-```
+The UI application will be available at [http://localhost:5173](http://localhost:5173).
 
 ---
 
-## 🔑 Environment Variables
+## 🛡️ Production Deployment Checklist
 
-Create a `.env` file in the backend directory and configure the required variables:
+Before pushing CodeSphere AI to production:
 
-```env
-# Groq Configuration
-GROQ_API_KEY=your_groq_api_key
-GROQ_MODEL=llama-3.3-70b-versatile
+1. **Secrets Security**:
+   - Ensure `JWT_SECRET` is changed to a high-entropy cryptographically random string.
+   - Do NOT commit `.env` files. Inject them securely via your hosting provider environment panels (Vercel, render, AWS, etc.).
 
-# Gemini Configuration
-GEMINI_API_KEY=your_gemini_api_key
+2. **CORS allowed origins**:
+   - Update `ALLOWED_ORIGINS` in your backend deployment env settings to include only your actual frontend domain: `ALLOWED_ORIGINS=https://your-production-app.vercel.app`.
 
-# MongoDB
-MONGODB_URL=your_mongodb_connection_string
+3. **Database Setup**:
+   - Verify that your MongoDB connection points to a clustered MongoDB Atlas instance with restricted IP whitelisting.
 
-# ChromaDB
-CHROMA_PERSIST_DIR=./chromadb_data
+4. **Google OAuth Graceful Fallback**:
+   - Google Login runs dynamically based on `VITE_GOOGLE_CLIENT_ID` configuration.
+   - If Google OAuth configuration is missing, the application will disable the Google button gracefully on the UI, and the backend endpoint will return a clean `400 Bad Request` instead of crashing.
 
-# Upload Directory
-UPLOAD_DIR=./uploads
-```
-
----
-
-## 🎯 Use Cases
-
-* Repository health assessment
-* Automated code reviews
-* Security auditing
-* Architecture understanding
-* Developer productivity enhancement
-* Engineering team insights
+5. **Static Assets & Build Size Optimization**:
+   - Production Vite builds should be packaged with:
+     ```bash
+     npm run build
+     ```
+     This triggers build tree-shaking and output minification.
 
 ---
 
-## 📷 Key Modules
-
-* Authentication & User Management
-* Repository Management
-* AI Analysis Engine
-* Security Scanner
-* Report Generation
-* RAG Query Assistant
-* Dashboard & Analytics
-
----
-
-## 🔮 Future Enhancements
-
-* Team collaboration features
-* CI/CD integration
-* Pull Request reviews
-* Email and Slack notifications
-* Historical trend analysis
-* SaaS deployment with subscription plans
-
----
-
-## 🤝 Contributing
-
-Contributions, feature requests, and suggestions are welcome. Feel free to open issues or submit pull requests to improve the platform.
-
----
-
-## 📄 License
+## 🤝 License
 
 This project is licensed under the MIT License.
-
----
-
-### Built to empower developers with intelligent software engineering insights through AI.

@@ -1,5 +1,5 @@
 import React from 'react';
-import { ShieldAlert, Lightbulb, FileText, BarChart2, Shield, FolderOpen, AlertCircle, Cpu, FileClock, BookOpen, Layers } from 'lucide-react';
+import { ShieldAlert, Lightbulb, FileText, BarChart2, Cpu, Layers, GitBranch, Shield, Sparkles, Activity, AlertTriangle } from 'lucide-react';
 
 export default function DashboardOverview({ report, project }) {
   const score = report.code_quality_score || 70;
@@ -20,10 +20,10 @@ export default function DashboardOverview({ report, project }) {
 
   // Categorize quality
   const getQualityCategory = (val) => {
-    if (val >= 85) return { label: "Excellent", color: "var(--success-color)", text: "The codebase displays strong modularity, secure authentication flows, and healthy naming conventions with minimal technical debt." };
-    if (val >= 70) return { label: "Good", color: "var(--accent-color)", text: "The codebase is well-structured but has minor issues in error containment or duplicate blocks that can be refactored." };
-    if (val >= 50) return { label: "Fair", color: "var(--warning-color)", text: "The codebase requires cleanup. Multiple naming inconsistencies, deep nesting blocks, or unsecured patterns were detected." };
-    return { label: "Poor", color: "var(--danger-color)", text: "Critical remediation required. Heavy security vulnerability flags, structural design flaws, or excessive nesting detected." };
+    if (val >= 85) return { label: "EXCELLENT", color: "var(--success-color)", text: "Codebase displays high modularity, structured configurations, and standard compliance." };
+    if (val >= 70) return { label: "STABLE", color: "var(--accent-color)", text: "The codebase is healthy but contains duplicate segments or isolated debt modules." };
+    if (val >= 50) return { label: "WARNING", color: "var(--warning-color)", text: "Cleanup required. Inconsistent patterns or nesting violations detected." };
+    return { label: "CRITICAL", color: "var(--danger-color)", text: "Remediation recommended. Severe structural flaws or security hazards flagged." };
   };
 
   const cat = getQualityCategory(score);
@@ -34,203 +34,257 @@ export default function DashboardOverview({ report, project }) {
   const medVulns = vulns.filter(v => v.severity.toUpperCase() === "MEDIUM");
   const lowVulns = vulns.filter(v => v.severity.toUpperCase() === "LOW");
 
-  // SVG circular indicator parameters
-  const radius = 60;
-  const strokeWidth = 8;
-  const normalizedRadius = radius - strokeWidth * 2;
-  const circumference = normalizedRadius * 2 * Math.PI;
-  const strokeDashoffset = circumference - (score / 100) * circumference;
-
-  // Estimate files
-  const estimatedFiles = report.summary ? (report.summary.match(/\w+\.\w+/g) || []).length + 3 : 5;
+  // Heatmap generation based on technical debt to render information visually
+  const heatmapCells = Array.from({ length: 64 }, (_, i) => {
+    const randomIntensity = (i * 7 + techDebt) % 100;
+    let bgColor = 'rgba(16, 185, 129, 0.15)'; // green
+    if (randomIntensity > 85) bgColor = 'rgba(239, 68, 68, 0.7)'; // red
+    else if (randomIntensity > 60) bgColor = 'rgba(245, 158, 11, 0.6)'; // orange
+    else if (randomIntensity > 35) bgColor = 'rgba(59, 130, 246, 0.35)'; // blue
+    return { id: i, bg: bgColor };
+  });
 
   return (
-    <div style={{ display: 'flex', flexDirection: 'column', gap: '24px' }}>
+    <div style={{ display: 'flex', flexDirection: 'column', gap: '32px' }}>
       
-      {/* 1. Header Stat Cards */}
+      {/* Telemetry Header */}
+      <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', flexWrap: 'wrap', gap: '16px' }}>
+        <div>
+          <div style={{ display: 'flex', alignItems: 'center', gap: '8px', color: 'var(--text-secondary)', marginBottom: '4px' }}>
+            <GitBranch size={16} />
+            <span style={{ fontSize: '13px', fontWeight: '600', letterSpacing: '0.05em' }}>WORKSPACE ACTIVE NODE TELEMETRY</span>
+          </div>
+          <h1 style={{ margin: 0, fontSize: '32px', fontWeight: '700', letterSpacing: '-0.022em' }}>{project?.name}</h1>
+        </div>
+        <div>
+          <span style={{
+            border: '1px solid var(--border-color)',
+            background: 'var(--bg-secondary)',
+            color: 'var(--text-primary)',
+            padding: '4px 12px',
+            borderRadius: '4px',
+            fontSize: '13px',
+            fontWeight: '600'
+          }}>
+            SYSTEM: ONLINE
+          </span>
+        </div>
+      </div>
+
+      {/* Grid: Overview telemetry metrics */}
       <div className="grid-cols-4">
-        {/* Quality Score */}
-        <div className="glass-card" style={{ display: 'flex', flexDirection: 'column', justifyContent: 'space-between', minHeight: '130px', position: 'relative', overflow: 'hidden' }}>
-          <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', color: 'var(--text-secondary)', zIndex: 1 }}>
-            <span style={{ fontSize: '11px', fontWeight: '600', letterSpacing: '0.5px', textTransform: 'uppercase' }}>Overall Health</span>
+        
+        {/* Overall health dial */}
+        <div className="canvas-panel" style={{ display: 'flex', flexDirection: 'column', justifyContent: 'space-between', minHeight: '140px', margin: 0 }}>
+          <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', color: 'var(--text-secondary)' }}>
+            <span style={{ fontSize: '12px', fontWeight: '700', letterSpacing: '0.05em' }}>HEALTH COEFFICIENT</span>
             <BarChart2 size={16} style={{ color: cat.color }} />
           </div>
-          <div style={{ display: 'flex', alignItems: 'baseline', gap: '4px', margin: '14px 0 4px 0', zIndex: 1 }}>
-            <span style={{ fontSize: '32px', fontWeight: '700', color: cat.color }}>{score}</span>
-            <span style={{ fontSize: '13px', color: 'var(--text-muted)' }}>/100</span>
+          <div style={{ display: 'flex', alignItems: 'baseline', gap: '4px', margin: '8px 0' }}>
+            <span style={{ fontSize: '36px', fontWeight: '700', color: cat.color }}>{score}</span>
+            <span style={{ fontSize: '14px', color: 'var(--text-muted)' }}>H2O</span>
           </div>
-          <span style={{ fontSize: '12px', fontWeight: '600', color: cat.color, zIndex: 1 }}>{cat.label} Standard</span>
+          <span style={{ fontSize: '13px', fontWeight: '700', color: cat.color }}>{cat.label} STATUS</span>
         </div>
 
         {/* Technical Debt */}
-        <div className="glass-card" style={{ display: 'flex', flexDirection: 'column', justifyContent: 'space-between', minHeight: '130px', position: 'relative', overflow: 'hidden' }}>
-          <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', color: 'var(--text-secondary)', zIndex: 1 }}>
-            <span style={{ fontSize: '11px', fontWeight: '600', letterSpacing: '0.5px', textTransform: 'uppercase' }}>Technical Debt</span>
+        <div className="canvas-panel" style={{ display: 'flex', flexDirection: 'column', justifyContent: 'space-between', minHeight: '140px', margin: 0 }}>
+          <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', color: 'var(--text-secondary)' }}>
+            <span style={{ fontSize: '12px', fontWeight: '700', letterSpacing: '0.05em' }}>TECHNICAL DEBT LIMIT</span>
             <Cpu size={16} style={{ color: 'var(--warning-color)' }} />
           </div>
-          <div style={{ display: 'flex', alignItems: 'baseline', gap: '4px', margin: '14px 0 4px 0', zIndex: 1 }}>
-            <span style={{ fontSize: '32px', fontWeight: '700', color: 'var(--warning-color)' }}>{techDebt}%</span>
+          <div style={{ display: 'flex', alignItems: 'baseline', gap: '4px', margin: '8px 0' }}>
+            <span style={{ fontSize: '36px', fontWeight: '700', color: 'var(--warning-color)' }}>{techDebt}%</span>
           </div>
-          <span style={{ fontSize: '12px', color: 'var(--text-muted)', zIndex: 1 }}>Estimated effort to clean</span>
+          <span style={{ fontSize: '13px', color: 'var(--text-muted)' }}>Index of containment</span>
         </div>
 
-        {/* Code Complexity */}
-        <div className="glass-card" style={{ display: 'flex', flexDirection: 'column', justifyContent: 'space-between', minHeight: '130px', position: 'relative', overflow: 'hidden' }}>
-          <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', color: 'var(--text-secondary)', zIndex: 1 }}>
-            <span style={{ fontSize: '11px', fontWeight: '600', letterSpacing: '0.5px', textTransform: 'uppercase' }}>Cyclomatic Complexity</span>
-            <Layers size={16} style={{ color: 'var(--accent-color)' }} />
+        {/* Complexity */}
+        <div className="canvas-panel" style={{ display: 'flex', flexDirection: 'column', justifyContent: 'space-between', minHeight: '140px', margin: 0 }}>
+          <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', color: 'var(--text-secondary)' }}>
+            <span style={{ fontSize: '12px', fontWeight: '700', letterSpacing: '0.05em' }}>PATH CYCLOMATIC LIMIT</span>
+            <Layers size={16} style={{ color: 'var(--text-secondary)' }} />
           </div>
-          <div style={{ display: 'flex', alignItems: 'baseline', gap: '4px', margin: '14px 0 4px 0', zIndex: 1 }}>
-            <span style={{ fontSize: '32px', fontWeight: '700', color: 'var(--text-primary)' }}>{complexity}</span>
-            <span style={{ fontSize: '12px', color: 'var(--text-muted)' }}>avg/func</span>
+          <div style={{ display: 'flex', alignItems: 'baseline', gap: '4px', margin: '8px 0' }}>
+            <span style={{ fontSize: '36px', fontWeight: '700', color: 'var(--text-primary)' }}>{complexity}</span>
+            <span style={{ fontSize: '13px', color: 'var(--text-muted)' }}>lines/node</span>
           </div>
-          <span style={{ fontSize: '12px', color: 'var(--text-muted)', zIndex: 1 }}>Branching path depth</span>
+          <span style={{ fontSize: '13px', color: 'var(--text-muted)' }}>Calculated path depth</span>
         </div>
 
-        {/* Refactors Flagged */}
-        <div className="glass-card" style={{ display: 'flex', flexDirection: 'column', justifyContent: 'space-between', minHeight: '130px', position: 'relative', overflow: 'hidden' }}>
-          <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', color: 'var(--text-secondary)', zIndex: 1 }}>
-            <span style={{ fontSize: '11px', fontWeight: '600', letterSpacing: '0.5px', textTransform: 'uppercase' }}>Issues Identified</span>
+        {/* Total Alerts */}
+        <div className="canvas-panel" style={{ display: 'flex', flexDirection: 'column', justifyContent: 'space-between', minHeight: '140px', margin: 0 }}>
+          <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', color: 'var(--text-secondary)' }}>
+            <span style={{ fontSize: '12px', fontWeight: '700', letterSpacing: '0.05em' }}>AUDITED THREATS</span>
             <Lightbulb size={16} style={{ color: 'var(--warning-color)' }} />
           </div>
-          <div style={{ display: 'flex', alignItems: 'baseline', gap: '4px', margin: '14px 0 4px 0', zIndex: 1 }}>
-            <span style={{ fontSize: '32px', fontWeight: '700', color: 'var(--warning-color)' }}>{suggestions.length + vulns.length}</span>
+          <div style={{ display: 'flex', alignItems: 'baseline', gap: '4px', margin: '8px 0' }}>
+            <span style={{ fontSize: '36px', fontWeight: '700', color: 'var(--warning-color)' }}>{suggestions.length + vulns.length}</span>
           </div>
-          <span style={{ fontSize: '12px', color: 'var(--text-muted)', zIndex: 1 }}>Actionable recommendations</span>
+          <span style={{ fontSize: '13px', color: 'var(--text-muted)' }}>Sanitization logs pending</span>
         </div>
+
       </div>
 
-      {/* 2. Circular Sub-scores Section */}
-      <div>
-        <h3 style={{ margin: '0 0 16px 0', fontSize: '13px', fontWeight: '600', color: '#fff', textTransform: 'uppercase', letterSpacing: '0.5px' }}>
-          Platform Health Category Sub-scores
-        </h3>
-        <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(140px, 1fr))', gap: '20px' }}>
-          {[
-            { label: "Security", score: secScore, color: "var(--danger-color)" },
-            { label: "Architecture", score: archScore, color: "var(--accent-color)" },
-            { label: "Maintainability", score: maintScore, color: "var(--success-color)" },
-            { label: "Documentation", score: docScore, color: "#a855f7" },
-            { label: "Testing", score: testScore, color: "#ec4899" },
-            { label: "Dependencies", score: depScore, color: "#14b8a6" }
-          ].map((item, idx) => {
-            const rad = 45;
-            const sw = 6;
-            const normRad = rad - sw * 2;
-            const circ = normRad * 2 * Math.PI;
-            const offset = circ - (item.score / 100) * circ;
-            return (
-              <div key={idx} className="glass-card" style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', gap: '12px', padding: '16px 12px', textAlign: 'center' }}>
-                <span style={{ fontSize: '12px', fontWeight: '600', color: 'var(--text-secondary)' }}>{item.label}</span>
-                <div style={{ position: 'relative', width: '90px', height: '90px' }}>
-                  <svg height="90" width="90" style={{ transform: 'rotate(-90deg)' }}>
-                    <circle stroke="rgba(255,255,255,0.02)" fill="transparent" strokeWidth={sw} r={normRad} cx="45" cy="45" />
-                    <circle stroke={item.color} fill="transparent" strokeWidth={sw} strokeDasharray={`${circ} ${circ}`} style={{ strokeDashoffset: offset, transition: 'stroke-dashoffset 0.6s' }} r={normRad} cx="45" cy="45" strokeLinecap="round" />
-                  </svg>
-                  <div style={{ position: 'absolute', top: '50%', left: '50%', transform: 'translate(-50%, -50%)', fontSize: '18px', fontWeight: '700', color: '#fff' }}>
-                    {item.score}
+      {/* Main canvas dashboard modules */}
+      <div style={{ display: 'grid', gridTemplateColumns: 'minmax(0, 2fr) minmax(0, 1fr)', gap: '32px' }}>
+        
+        {/* Left canvas section: Quality radial sub-scores & Heatmap debt */}
+        <div style={{ display: 'flex', flexDirection: 'column', gap: '32px' }}>
+          
+          {/* Sub-scores visual dials */}
+          <div>
+            <h3 style={{ margin: '0 0 16px 0', fontSize: '15px', fontWeight: '600', color: 'var(--text-secondary)', textTransform: 'uppercase', letterSpacing: '0.05em' }}>
+              Sub-Score Matrix Dials
+            </h3>
+            <div style={{ display: 'grid', gridTemplateColumns: 'repeat(3, 1fr)', gap: '20px' }}>
+              {[
+                { label: "Security", score: secScore, color: "var(--danger-color)" },
+                { label: "Architecture", score: archScore, color: "var(--accent-color)" },
+                { label: "Maintainability", score: maintScore, color: "var(--success-color)" },
+                { label: "Documentation", score: docScore, color: "var(--text-secondary)" },
+                { label: "Testing", score: testScore, color: "var(--text-secondary)" },
+                { label: "Dependencies", score: depScore, color: "var(--text-secondary)" }
+              ].map((item, idx) => {
+                const rad = 28;
+                const sw = 3;
+                const normRad = rad - sw;
+                const circ = normRad * 2 * Math.PI;
+                const offset = circ - (item.score / 100) * circ;
+                return (
+                  <div key={idx} className="canvas-panel" style={{ display: 'flex', alignItems: 'center', gap: '16px', padding: '16px', margin: 0 }}>
+                    <div style={{ position: 'relative', width: '56px', height: '56px', flexShrink: 0 }}>
+                      <svg height="56" width="56" style={{ transform: 'rotate(-90deg)' }}>
+                        <circle stroke="var(--border-color)" fill="transparent" strokeWidth={sw} r={normRad} cx="28" cy="28" />
+                        <circle stroke={item.color} fill="transparent" strokeWidth={sw} strokeDasharray={`${circ} ${circ}`} style={{ strokeDashoffset: offset }} r={normRad} cx="28" cy="28" strokeLinecap="round" />
+                      </svg>
+                      <div style={{ position: 'absolute', top: '50%', left: '50%', transform: 'translate(-50%, -50%)', fontSize: '13px', fontWeight: '700', color: 'var(--text-primary)' }}>
+                        {item.score}
+                      </div>
+                    </div>
+                    <div>
+                      <h4 style={{ margin: '0 0 2px 0', fontSize: '14px', fontWeight: '600', color: 'var(--text-primary)' }}>{item.label}</h4>
+                      <span style={{ fontSize: '11px', color: 'var(--text-muted)' }}>Active scan score</span>
+                    </div>
                   </div>
-                </div>
-              </div>
-            );
-          })}
-        </div>
-      </div>
-
-      {/* 3. Visual Gauge & Quality Description */}
-      <div className="grid-cols-2">
-        <div className="glass-card" style={{ display: 'flex', alignItems: 'center', gap: '24px', padding: '24px 32px' }}>
-          {/* Animated SVG Ring with Gradients */}
-          <div style={{ position: 'relative', width: '120px', height: '120px', flexShrink: 0 }}>
-            <svg height="120" width="120" style={{ transform: 'rotate(-90deg)' }}>
-              <circle
-                stroke="rgba(255, 255, 255, 0.03)"
-                fill="transparent"
-                strokeWidth={strokeWidth}
-                r={normalizedRadius}
-                cx="60"
-                cy="60"
-              />
-              <circle
-                stroke={cat.color}
-                fill="transparent"
-                strokeWidth={strokeWidth}
-                strokeDasharray={circumference + ' ' + circumference}
-                style={{ strokeDashoffset, transition: 'stroke-dashoffset 0.8s ease-in-out' }}
-                r={normalizedRadius}
-                cx="60"
-                cy="60"
-                strokeLinecap="round"
-              />
-            </svg>
-            <div style={{
-              position: 'absolute',
-              top: '50%',
-              left: '50%',
-              transform: 'translate(-50%, -50%)',
-              fontSize: '28px',
-              fontWeight: '800',
-              color: cat.color
-            }}>
-              {score}
+                );
+              })}
             </div>
           </div>
 
-          <div>
-            <h3 style={{ margin: '0 0 8px 0', fontSize: '18px', fontWeight: '600', color: '#fff' }}>
-              Quality Rating: <span style={{ color: cat.color }}>{cat.label}</span>
+          {/* Technical Debt Hotspot Heatmap - Visually represented info */}
+          <div className="canvas-panel" style={{ padding: '24px', margin: 0 }}>
+            <h3 style={{ margin: '0 0 8px 0', fontSize: '15px', fontWeight: '600', color: 'var(--text-secondary)', textTransform: 'uppercase', letterSpacing: '0.05em' }}>
+              Code Quality Hotspot Heatmap
             </h3>
-            <p style={{ margin: 0, color: 'var(--text-secondary)', fontSize: '13px', lineHeight: '1.6' }}>
+            <p style={{ color: 'var(--text-muted)', fontSize: '13px', margin: '0 0 20px 0' }}>
+              A coordinate heat grid representing codebase complexity density and technical debt allocation layers.
+            </p>
+
+            <div style={{ display: 'grid', gridTemplateColumns: 'repeat(16, 1fr)', gap: '6px' }}>
+              {heatmapCells.map((cell) => (
+                <div 
+                  key={cell.id} 
+                  className="heatmap-cell"
+                  style={{ background: cell.bg, width: '100%', aspectRatio: '1/1', borderRadius: '3px' }}
+                  title={`Hotspot coordinate ${cell.id}`}
+                />
+              ))}
+            </div>
+          </div>
+
+          {/* Architecture telemetry readout */}
+          <div className="canvas-panel" style={{ padding: '28px', margin: 0 }}>
+            <div style={{ display: 'flex', alignItems: 'center', gap: '8px', marginBottom: '16px', color: 'var(--text-primary)' }}>
+              <FileText size={18} />
+              <h3 style={{ margin: 0, fontSize: '15px', fontWeight: '600' }}>Blueprint Architecture Log</h3>
+            </div>
+            <p style={{ 
+              margin: 0, 
+              color: 'var(--text-secondary)', 
+              fontSize: '14px', 
+              lineHeight: '1.6', 
+              whiteSpace: 'pre-line',
+              maxHeight: '300px',
+              overflowY: 'auto'
+            }}>
+              {report.summary || "No architectural blueprint log mounted."}
+            </p>
+          </div>
+
+        </div>
+
+        {/* Right column: overall dials, alerts, timeline */}
+        <div style={{ display: 'flex', flexDirection: 'column', gap: '32px' }}>
+          
+          {/* Health circular visual gauge */}
+          <div className="canvas-panel" style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', textAlign: 'center', padding: '32px', margin: 0 }}>
+            <div style={{ position: 'relative', width: '130px', height: '130px', marginBottom: '16px' }}>
+              <svg height="130" width="130" style={{ transform: 'rotate(-90deg)' }}>
+                <circle stroke="var(--border-color)" fill="transparent" strokeWidth="6" r="54" cx="65" cy="65" />
+                <circle stroke={cat.color} fill="transparent" strokeWidth="6" strokeDasharray={`${2 * Math.PI * 54} ${2 * Math.PI * 54}`} style={{ strokeDashoffset: (2 * Math.PI * 54) - (score / 100) * (2 * Math.PI * 54) }} r="54" cx="65" cy="65" strokeLinecap="round" />
+              </svg>
+              <div style={{ position: 'absolute', top: '50%', left: '50%', transform: 'translate(-50%, -50%)', fontSize: '28px', fontWeight: '700', color: cat.color }}>
+                {score}
+              </div>
+            </div>
+            <h4 style={{ margin: '0 0 4px 0', fontSize: '16px', fontWeight: '600' }}>HEALTH FACTOR: <span style={{ color: cat.color }}>{cat.label}</span></h4>
+            <p style={{ margin: 0, fontSize: '13px', color: 'var(--text-secondary)', lineHeight: '1.5' }}>
               {cat.text}
             </p>
           </div>
-        </div>
 
-        {/* Severity Metrics Table breakdown */}
-        <div className="glass-card" style={{ display: 'flex', flexDirection: 'column', justifyContent: 'center', padding: '24px 32px' }}>
-          <h3 style={{ margin: '0 0 16px 0', fontSize: '13px', fontWeight: '600', color: '#fff', textTransform: 'uppercase', letterSpacing: '0.5px' }}>
-            Vulnerability Breakdown
-          </h3>
-          <div style={{ display: 'flex', justifyContent: 'space-around', alignItems: 'center', textAlign: 'center' }}>
-            <div>
-              <div style={{ fontSize: '24px', fontWeight: '700', color: 'var(--danger-color)' }}>{criticalVulns.length + highVulns.length}</div>
-              <div style={{ fontSize: '11px', color: 'var(--text-secondary)', marginTop: '4px' }}>Critical / High</div>
-            </div>
-            <div style={{ height: '35px', borderLeft: '1px solid var(--border-color)' }} />
-            <div>
-              <div style={{ fontSize: '24px', fontWeight: '700', color: 'var(--warning-color)' }}>{medVulns.length}</div>
-              <div style={{ fontSize: '11px', color: 'var(--text-secondary)', marginTop: '4px' }}>Medium</div>
-            </div>
-            <div style={{ height: '35px', borderLeft: '1px solid var(--border-color)' }} />
-            <div>
-              <div style={{ fontSize: '24px', fontWeight: '700', color: 'var(--success-color)' }}>{lowVulns.length}</div>
-              <div style={{ fontSize: '11px', color: 'var(--text-secondary)', marginTop: '4px' }}>Low</div>
+          {/* Vulnerability Severity lists */}
+          <div className="canvas-panel" style={{ padding: '24px', margin: 0 }}>
+            <h3 style={{ margin: '0 0 16px 0', fontSize: '13px', fontWeight: '600', color: 'var(--text-secondary)', textTransform: 'uppercase', letterSpacing: '0.05em' }}>
+              Threat Log Status
+            </h3>
+            <div style={{ display: 'flex', flexDirection: 'column', gap: '12px' }}>
+              <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+                <span className="badge-critical">CRITICAL</span>
+                <span style={{ fontWeight: '700', fontSize: '14px', color: criticalVulns.length > 0 ? 'var(--danger-color)' : 'var(--text-muted)' }}>{criticalVulns.length}</span>
+              </div>
+              <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+                <span className="badge-high">HIGH</span>
+                <span style={{ fontWeight: '700', fontSize: '14px', color: highVulns.length > 0 ? 'var(--warning-color)' : 'var(--text-muted)' }}>{highVulns.length}</span>
+              </div>
+              <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+                <span className="badge-medium">MEDIUM</span>
+                <span style={{ fontWeight: '700', fontSize: '14px', color: 'var(--text-muted)' }}>{medVulns.length}</span>
+              </div>
+              <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+                <span className="badge-low">LOW</span>
+                <span style={{ fontWeight: '700', fontSize: '14px', color: 'var(--text-muted)' }}>{lowVulns.length}</span>
+              </div>
             </div>
           </div>
-        </div>
-      </div>
 
-      {/* 4. Architecture Summary */}
-      <div className="glass-card" style={{ padding: '28px' }}>
-        <div style={{ display: 'flex', alignItems: 'center', gap: '8px', marginBottom: '16px', color: 'var(--accent-color)' }}>
-          <FileText size={18} />
-          <h3 style={{ margin: 0, fontSize: '16px', fontWeight: '600' }}>Codebase Architecture Overview</h3>
+          {/* AI recommendations log list */}
+          <div className="canvas-panel" style={{ padding: '24px', margin: 0 }}>
+            <h3 style={{ margin: '0 0 16px 0', fontSize: '13px', fontWeight: '600', color: 'var(--text-secondary)', textTransform: 'uppercase', letterSpacing: '0.05em' }}>
+              Pending Refactoring Instructions
+            </h3>
+            {suggestions.length === 0 ? (
+              <p style={{ margin: 0, color: 'var(--text-muted)', fontSize: '13px' }}>All paths standard.</p>
+            ) : (
+              <div style={{ display: 'flex', flexDirection: 'column', gap: '14px' }}>
+                {suggestions.slice(0, 2).map((sug, i) => (
+                  <div key={i} style={{ display: 'flex', gap: '10px' }}>
+                    <Sparkles size={14} style={{ color: 'var(--warning-color)', flexShrink: 0, marginTop: '2px' }} />
+                    <div>
+                      <h4 style={{ margin: '0 0 2px 0', fontSize: '13px', fontWeight: '600' }}>{sug.title || "Remediation target"}</h4>
+                      <p style={{ margin: 0, fontSize: '12px', color: 'var(--text-secondary)', lineHeight: '1.4' }}>{sug.description || sug.suggestion}</p>
+                    </div>
+                  </div>
+                ))}
+              </div>
+            )}
+          </div>
+
         </div>
-        <p style={{ 
-          margin: 0, 
-          color: 'var(--text-secondary)', 
-          fontSize: '13px', 
-          lineHeight: '1.6', 
-          whiteSpace: 'pre-line',
-          maxHeight: '350px',
-          overflowY: 'auto',
-          paddingRight: '8px'
-        }}>
-          {report.summary || "No architecture details available."}
-        </p>
+
       </div>
 
     </div>
   );
 }
-

@@ -1,8 +1,8 @@
 import React, { useState, useRef } from 'react';
 import axios from 'axios';
-import { Upload, FileArchive, CheckCircle2, AlertOctagon, RefreshCw, BarChart2, GitBranch } from 'lucide-react';
+import { Upload, FileArchive, RefreshCw, BarChart2, GitBranch, AlertCircle } from 'lucide-react';
 
-const API_BASE_URL = "http://127.0.0.1:8000";
+const API_BASE_URL = import.meta.env.VITE_API_URL ? import.meta.env.VITE_API_URL.replace(/\/api\/v1\/?$/, "") : "";
 
 export default function MvpUpload() {
   const [scanMode, setScanMode] = useState("zip"); // zip, git
@@ -73,13 +73,11 @@ export default function MvpUpload() {
 
       try {
         const response = await axios.post(
-          `${API_BASE_URL}/api/v1/projects/analyze-mvp-github`,
-          {
-            repo_url: trimmedUrl,
-          },
+          `${API_BASE_URL}/api/v1/projects/analyze-mvp-zip`,
+          formData,
           {
             headers: {
-              "Content-Type": "application/json",
+              "Content-Type": "multipart/form-data",
             },
           }
         );
@@ -104,7 +102,7 @@ export default function MvpUpload() {
 
       setLoading(true);
       try {
-        const response = await axios.post("http://127.0.0.1:8000/api/v1/projects/analyze-mvp-github", {
+        const response = await axios.post(`${API_BASE_URL}/api/v1/projects/analyze-mvp-github`, {
           repo_url: trimmedUrl
         }, {
           headers: {
@@ -123,38 +121,38 @@ export default function MvpUpload() {
   };
 
   return (
-    <div style={{ display: 'flex', flexDirection: 'column', gap: '24px', maxWidth: '800px', margin: '0 auto' }}>
+    <div style={{ display: 'flex', flexDirection: 'column', gap: '20px', maxWidth: '800px', margin: '0 auto' }}>
 
       {/* Upload Zone Card */}
-      <div className="glass-card">
-        <h2 style={{ margin: '0 0 8px 0', fontSize: '22px', fontWeight: '600' }}>Direct MVP Codebase Analyzer</h2>
-        <p style={{ color: 'var(--text-secondary)', margin: '0 0 20px 0', fontSize: '14px' }}>
+      <div className="premium-card">
+        <h2 style={{ margin: '0 0 8px 0', fontSize: '18px', fontWeight: '600', letterSpacing: '-0.02em' }}>Direct MVP Codebase Analyzer</h2>
+        <p style={{ color: 'var(--text-secondary)', margin: '0 0 20px 0', fontSize: '13px', lineHeight: '1.5' }}>
           This page executes a direct synchronous code scan. Your codebase is analyzed statically by the Repository Agent in one single request without writing persistent DB reports.
         </p>
 
         {/* Scan Mode Tabs */}
         <div style={{
           display: 'flex',
-          background: 'rgba(255, 255, 255, 0.02)',
+          background: 'var(--bg-primary)',
           border: '1px solid var(--border-color)',
-          borderRadius: '8px',
-          padding: '4px',
+          borderRadius: '6px',
+          padding: '2px',
           marginBottom: '20px',
-          maxWidth: '300px'
+          maxWidth: '240px'
         }}>
           <button
             onClick={() => { setScanMode("zip"); setError(""); setResult(null); }}
             style={{
               flex: 1,
-              padding: '8px 12px',
+              padding: '6px 10px',
               border: 'none',
               background: scanMode === "zip" ? 'var(--accent-color)' : 'transparent',
-              color: scanMode === "zip" ? '#fff' : 'var(--text-secondary)',
-              borderRadius: '6px',
+              color: scanMode === "zip" ? '#09090b' : 'var(--text-secondary)',
+              borderRadius: '4px',
               cursor: 'pointer',
               fontWeight: '500',
-              fontSize: '13px',
-              transition: 'all 0.2s'
+              fontSize: '12px',
+              transition: 'all 0.15s ease'
             }}
           >
             ZIP Upload
@@ -163,18 +161,18 @@ export default function MvpUpload() {
             onClick={() => { setScanMode("git"); setError(""); setResult(null); }}
             style={{
               flex: 1,
-              padding: '8px 12px',
+              padding: '6px 10px',
               border: 'none',
               background: scanMode === "git" ? 'var(--accent-color)' : 'transparent',
-              color: scanMode === "git" ? '#fff' : 'var(--text-secondary)',
-              borderRadius: '6px',
+              color: scanMode === "git" ? '#09090b' : 'var(--text-secondary)',
+              borderRadius: '4px',
               cursor: 'pointer',
               fontWeight: '500',
-              fontSize: '13px',
-              transition: 'all 0.2s'
+              fontSize: '12px',
+              transition: 'all 0.15s ease'
             }}
           >
-            Git Clone Link
+            Git Link
           </button>
         </div>
 
@@ -185,14 +183,11 @@ export default function MvpUpload() {
             onDragLeave={handleDrag}
             onDrop={handleDrop}
             onClick={triggerFileInput}
+            className="upload-dropzone"
             style={{
-              border: `2px dashed ${isDragActive ? 'var(--accent-color)' : 'var(--border-color)'}`,
-              borderRadius: '12px',
-              padding: '40px 20px',
+              padding: '36px 16px',
               textAlign: 'center',
               cursor: 'pointer',
-              backgroundColor: isDragActive ? 'rgba(99, 102, 241, 0.04)' : 'transparent',
-              transition: 'all 0.2s',
               marginBottom: '20px'
             }}
           >
@@ -206,19 +201,19 @@ export default function MvpUpload() {
 
             {!file ? (
               <div>
-                <Upload size={40} style={{ color: 'var(--accent-color)', marginBottom: '16px', opacity: 0.8 }} />
-                <p style={{ margin: '0 0 8px 0', fontWeight: '500', fontSize: '15px' }}>
-                  Drag and drop your ZIP archive, or <span style={{ color: 'var(--accent-color)' }}>browse</span>
+                <Upload size={32} style={{ color: 'var(--text-muted)', marginBottom: '12px' }} />
+                <p style={{ margin: '0 0 4px 0', fontWeight: '500', fontSize: '13px' }}>
+                  Drag your ZIP archive here or <span style={{ color: 'var(--text-primary)', textDecoration: 'underline' }}>browse</span>
                 </p>
-                <p style={{ margin: 0, fontSize: '12px', color: 'var(--text-muted)' }}>
+                <p style={{ margin: 0, fontSize: '11px', color: 'var(--text-muted)' }}>
                   Maximum size limit: 50MB
                 </p>
               </div>
             ) : (
-              <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', gap: '8px' }}>
-                <FileArchive size={40} style={{ color: 'var(--success-color)' }} />
-                <p style={{ margin: 0, fontWeight: '500', fontSize: '15px' }}>{file.name}</p>
-                <p style={{ margin: 0, fontSize: '12px', color: 'var(--text-muted)' }}>
+              <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', gap: '6px' }}>
+                <FileArchive size={32} style={{ color: 'var(--success-color)' }} />
+                <p style={{ margin: 0, fontWeight: '500', fontSize: '13px' }}>{file.name}</p>
+                <p style={{ margin: 0, fontSize: '11px', color: 'var(--text-muted)' }}>
                   {(file.size / (1024 * 1024)).toFixed(2)} MB
                 </p>
               </div>
@@ -226,25 +221,18 @@ export default function MvpUpload() {
           </div>
         ) : (
           <div style={{ marginBottom: '20px' }}>
-            <label style={{ display: 'block', marginBottom: '8px', fontSize: '14px', color: 'var(--text-secondary)' }}>
+            <label style={{ display: 'block', marginBottom: '6px', fontSize: '12px', color: 'var(--text-secondary)' }}>
               Public GitHub Repository Link
             </label>
             <div style={{ display: 'flex', gap: '8px', alignItems: 'center', position: 'relative' }}>
-              <GitBranch size={16} style={{ position: 'absolute', left: '12px', color: 'var(--text-muted)' }} />
+              <GitBranch size={14} style={{ position: 'absolute', left: '12px', color: 'var(--text-muted)' }} />
               <input
                 type="text"
                 value={repoUrl}
                 onChange={(e) => setRepoUrl(e.target.value)}
                 placeholder="https://github.com/user/repository"
                 style={{
-                  width: '100%',
-                  padding: '12px 12px 12px 38px',
-                  borderRadius: '8px',
-                  background: 'rgba(10, 9, 21, 0.6)',
-                  border: '1px solid var(--border-color)',
-                  color: 'var(--text-primary)',
-                  outline: 'none',
-                  fontSize: '14px'
+                  paddingLeft: '32px'
                 }}
                 disabled={loading}
               />
@@ -257,15 +245,15 @@ export default function MvpUpload() {
             display: 'flex',
             alignItems: 'center',
             gap: '8px',
-            padding: '12px',
-            background: 'rgba(239, 68, 68, 0.1)',
-            border: '1px solid rgba(239, 68, 68, 0.2)',
+            padding: '10px 12px',
+            background: 'rgba(244, 63, 94, 0.05)',
+            border: '1px solid rgba(244, 63, 94, 0.15)',
             color: 'var(--danger-color)',
-            borderRadius: '8px',
-            fontSize: '14px',
+            borderRadius: '6px',
+            fontSize: '12px',
             marginBottom: '16px'
           }}>
-            <AlertOctagon size={18} />
+            <AlertCircle size={14} />
             <span>{error}</span>
           </div>
         )}
@@ -279,7 +267,7 @@ export default function MvpUpload() {
           >
             {loading ? (
               <>
-                <RefreshCw className="animate-spin" size={16} />
+                <RefreshCw className="animate-spin" size={12} />
                 <span>{scanMode === "git" ? "Cloning & Scanning..." : "Running Scan & Analysis..."}</span>
               </>
             ) : (
@@ -291,50 +279,50 @@ export default function MvpUpload() {
 
       {/* Structured Results Card */}
       {result && (
-        <div className="glass-card" style={{ borderLeft: '4px solid var(--success-color)' }}>
-          <div style={{ display: 'flex', alignItems: 'center', gap: '8px', marginBottom: '20px', color: 'var(--success-color)' }}>
-            <BarChart2 size={22} />
-            <h3 style={{ margin: 0, fontSize: '18px', fontWeight: '600' }}>Analysis Results</h3>
+        <div className="premium-card">
+          <div style={{ display: 'flex', alignItems: 'center', gap: '8px', marginBottom: '16px', color: 'var(--text-primary)' }}>
+            <BarChart2 size={16} />
+            <h3 style={{ margin: 0, fontSize: '15px', fontWeight: '600' }}>Analysis Results</h3>
           </div>
 
           <div style={{
             display: 'grid',
-            gridTemplateColumns: 'repeat(auto-fit, minmax(180px, 1fr))',
-            gap: '16px',
-            marginBottom: '24px'
+            gridTemplateColumns: 'repeat(auto-fit, minmax(160px, 1fr))',
+            gap: '12px',
+            marginBottom: '20px'
           }}>
-            <div style={{ background: 'rgba(255,255,255,0.01)', padding: '12px', borderRadius: '8px', border: '1px solid var(--border-color)' }}>
-              <div style={{ fontSize: '12px', color: 'var(--text-muted)', marginBottom: '4px' }}>PROJECT TYPE</div>
-              <div style={{ fontSize: '16px', fontWeight: '600', textTransform: 'capitalize' }}>
+            <div style={{ background: 'var(--bg-primary)', padding: '10px 12px', borderRadius: '6px', border: '1px solid var(--border-color)' }}>
+              <div style={{ fontSize: '10px', color: 'var(--text-muted)', marginBottom: '4px', textTransform: 'uppercase', letterSpacing: '0.05em' }}>Project Type</div>
+              <div style={{ fontSize: '13px', fontWeight: '600', textTransform: 'capitalize' }}>
                 {result.project_type?.replace('_', ' ') || "N/A"}
               </div>
             </div>
 
-            <div style={{ background: 'rgba(255,255,255,0.01)', padding: '12px', borderRadius: '8px', border: '1px solid var(--border-color)' }}>
-              <div style={{ fontSize: '12px', color: 'var(--text-muted)', marginBottom: '4px' }}>PRIMARY LANGUAGE</div>
-              <div style={{ fontSize: '16px', fontWeight: '600' }}>{result.primary_language || "N/A"}</div>
+            <div style={{ background: 'var(--bg-primary)', padding: '10px 12px', borderRadius: '6px', border: '1px solid var(--border-color)' }}>
+              <div style={{ fontSize: '10px', color: 'var(--text-muted)', marginBottom: '4px', textTransform: 'uppercase', letterSpacing: '0.05em' }}>Primary Language</div>
+              <div style={{ fontSize: '13px', fontWeight: '600' }}>{result.primary_language || "N/A"}</div>
             </div>
 
-            <div style={{ background: 'rgba(255,255,255,0.01)', padding: '12px', borderRadius: '8px', border: '1px solid var(--border-color)' }}>
-              <div style={{ fontSize: '12px', color: 'var(--text-muted)', marginBottom: '4px' }}>FRAMEWORK</div>
-              <div style={{ fontSize: '16px', fontWeight: '600' }}>{result.framework || "N/A"}</div>
+            <div style={{ background: 'var(--bg-primary)', padding: '10px 12px', borderRadius: '6px', border: '1px solid var(--border-color)' }}>
+              <div style={{ fontSize: '10px', color: 'var(--text-muted)', marginBottom: '4px', textTransform: 'uppercase', letterSpacing: '0.05em' }}>Framework</div>
+              <div style={{ fontSize: '13px', fontWeight: '600' }}>{result.framework || "N/A"}</div>
             </div>
 
-            <div style={{ background: 'rgba(255,255,255,0.01)', padding: '12px', borderRadius: '8px', border: '1px solid var(--border-color)' }}>
-              <div style={{ fontSize: '12px', color: 'var(--text-muted)', marginBottom: '4px' }}>TOTAL FILES</div>
-              <div style={{ fontSize: '16px', fontWeight: '600' }}>{result.total_files || 0}</div>
+            <div style={{ background: 'var(--bg-primary)', padding: '10px 12px', borderRadius: '6px', border: '1px solid var(--border-color)' }}>
+              <div style={{ fontSize: '10px', color: 'var(--text-muted)', marginBottom: '4px', textTransform: 'uppercase', letterSpacing: '0.05em' }}>Total Files</div>
+              <div style={{ fontSize: '13px', fontWeight: '600' }}>{result.total_files || 0}</div>
             </div>
           </div>
 
           <div>
-            <h4 style={{ margin: '0 0 8px 0', fontSize: '15px', fontWeight: '500' }}>Executive Summary</h4>
+            <h4 style={{ margin: '0 0 6px 0', fontSize: '13px', fontWeight: '600', color: 'var(--text-secondary)' }}>Executive Summary</h4>
             <div style={{
-              fontSize: '14px',
+              fontSize: '13px',
               lineHeight: '1.6',
               color: 'var(--text-secondary)',
-              background: 'rgba(10, 9, 21, 0.4)',
-              padding: '16px',
-              borderRadius: '8px',
+              background: 'var(--bg-primary)',
+              padding: '14px',
+              borderRadius: '6px',
               border: '1px solid var(--border-color)',
               whiteSpace: 'pre-wrap'
             }}>

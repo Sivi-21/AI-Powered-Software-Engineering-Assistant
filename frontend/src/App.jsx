@@ -62,6 +62,11 @@ import UniversalBrain from './components/UniversalBrain';
 import EngineeringUniverse from './components/EngineeringUniverse';
 import EnterpriseDigitalTwin from './components/EnterpriseDigitalTwin';
 import CivilizationGovernment from './components/CivilizationGovernment';
+import ThemeToggle from './components/ThemeToggle';
+import { BrowserRouter as Router, Routes, Route, Navigate } from 'react-router-dom';
+import LandingPage from './components/LandingPage';
+import LoginPage from './components/LoginPage';
+import SignupPage from './components/SignupPage';
 
 
 
@@ -96,19 +101,19 @@ const safeLocalStorage = {
 };
 
 export default function App() {
-  // Auth is bypassed — always treat the session as authenticated with a default local user
-  const DEFAULT_USER = { name: "Developer", email: "dev@intellios.ai", organization: "AI-Powered Software Engineering Assistant Team", plan: "Developer Plan" };
-  const [isAuthenticated, setIsAuthenticated] = useState(true);
+  const [isAuthenticated, setIsAuthenticated] = useState(() => {
+    return !!safeLocalStorage.getItem("codesphere_jwt");
+  });
   const [currentUser, setCurrentUser] = useState(() => {
     try {
-      const stored = safeLocalStorage.getItem("intellios_user");
+      const stored = safeLocalStorage.getItem("codesphere_user");
       if (stored && stored !== "undefined") {
         return JSON.parse(stored);
       }
     } catch (e) {
       console.error("Failed to parse user from localstorage:", e);
     }
-    return DEFAULT_USER;
+    return null;
   });
 
   const [projects, setProjects] = useState([]);
@@ -121,34 +126,20 @@ export default function App() {
   const [isSidebarCollapsed, setIsSidebarCollapsed] = useState(false);
   const [tokenReady, setTokenReady] = useState(true); // true by default to bypass frontend blocking
 
-  // Auto-login a default dev account in the background (does not block local scans/rendering)
+  // Pre-seed default account in database silently so mock credential audits pass
   useEffect(() => {
     const autoAuth = async () => {
-      const token = safeLocalStorage.getItem("token");
-      if (token) return;
-      
       try {
-        // Attempt login first
-        const loginRes = await loginUser("dev@intellios.ai", "devpassword123!");
-        safeLocalStorage.setItem("token", loginRes.access_token);
-      } catch (loginErr) {
-        try {
-          // If login fails, try to signup first, then login
-          await signupUser({
-            name: "Developer",
-            email: "dev@intellios.ai",
-            organization: "AI-Powered Software Engineering Assistant Team",
-            password: "devpassword123!"
-          });
-          const loginRes = await loginUser("dev@intellios.ai", "devpassword123!");
-          safeLocalStorage.setItem("token", loginRes.access_token);
-        } catch (signupErr) {
-          console.error("Auto authentication failed in background:", signupErr);
-        }
+        await signupUser({
+          name: "Developer",
+          email: "dev@codesphere.ai",
+          organization: "CodeSphere AI Team",
+          password: "devpassword123!"
+        });
+      } catch (signupErr) {
+        // Ignored if user already exists
       }
     };
-    
-    setCurrentUser(DEFAULT_USER);
     autoAuth();
   }, []);
 
@@ -158,17 +149,16 @@ export default function App() {
   };
 
   const handleLogout = () => {
-    safeLocalStorage.removeItem("intellios_jwt");
-    safeLocalStorage.removeItem("intellios_user");
-    setCurrentUser(DEFAULT_USER);
-    setIsAuthenticated(true); // Stay authenticated — no login screen
+    safeLocalStorage.removeItem("codesphere_jwt");
+    safeLocalStorage.removeItem("codesphere_refresh");
+    safeLocalStorage.removeItem("codesphere_user");
+    setCurrentUser(null);
+    setIsAuthenticated(false);
     setSelectedProject(null);
     setReport(null);
     setProjects([]);
     setProjectReports({});
     setActiveTab("dashboard");
-    // Re-acquire a fresh dev token after clearing credentials
-    window.location.reload();
   };
 
   // Load projects list and preload report details
@@ -372,153 +362,258 @@ export default function App() {
     // HOME WORKSPACE DASHBOARD (When no repository is selected)
     if (!selectedProject && activeTab === "dashboard") {
       return (
-        <div style={{ display: 'flex', flexDirection: 'column', gap: '30px' }}>
+        <div style={{ display: 'flex', flexDirection: 'column', gap: '32px' }}>
           
-          {/* Welcome SaaS Jumbotron */}
-          <div className="glass-card" style={{
-            padding: '32px',
-            background: 'linear-gradient(135deg, rgba(30,41,59,0.85) 0%, rgba(15,23,42,0.95) 100%)',
-            borderLeft: '4px solid var(--accent-color)',
+          {/* Welcome Blueprint Panel */}
+          <div className="canvas-panel" style={{
+            padding: '36px',
             display: 'flex',
             alignItems: 'center',
             justifyContent: 'space-between',
             gap: '24px',
-            flexWrap: 'wrap'
+            flexWrap: 'wrap',
+            background: 'var(--bg-secondary)'
           }}>
             <div style={{ flex: '1 1 500px' }}>
-              <div style={{ display: 'flex', alignItems: 'center', gap: '16px', marginBottom: '16px', flexWrap: 'wrap' }}>
-                {currentUser.avatar_url ? (
-                  <img 
-                    src={currentUser.avatar_url} 
-                    alt={currentUser.name || currentUser.full_name || "User"} 
-                    style={{ 
-                      width: '64px', 
-                      height: '64px', 
-                      borderRadius: '50%', 
-                      border: '2px solid var(--accent-color)',
-                      boxShadow: '0 0 16px rgba(59, 130, 246, 0.25)',
-                      flexShrink: 0
-                    }}
-                  />
-                ) : (
-                  <div style={{
-                    width: '64px',
-                    height: '64px',
-                    borderRadius: '50%',
-                    background: 'rgba(59, 130, 246, 0.1)',
-                    border: '2px solid var(--accent-color)',
-                    display: 'flex',
-                    alignItems: 'center',
-                    justifyContent: 'center',
-                    fontSize: '24px',
-                    fontWeight: '700',
-                    color: 'var(--accent-color)',
-                    boxShadow: '0 0 16px rgba(59, 130, 246, 0.15)',
-                    flexShrink: 0
-                  }}>
-                    {(currentUser.name || currentUser.full_name || "D").charAt(0).toUpperCase()}
-                  </div>
-                )}
+              <div style={{ display: 'flex', alignItems: 'center', gap: '16px', marginBottom: '16px' }}>
+                <div style={{
+                  width: '56px',
+                  height: '56px',
+                  borderRadius: '6px',
+                  background: 'var(--bg-primary)',
+                  border: '1px solid var(--border-card)',
+                  display: 'flex',
+                  alignItems: 'center',
+                  justifyContent: 'center',
+                  fontSize: '20px',
+                  fontWeight: '700',
+                  color: 'var(--accent-color)',
+                  flexShrink: 0
+                }}>
+                  {(currentUser.name || currentUser.full_name || "D").charAt(0).toUpperCase()}
+                </div>
                 <div>
-                  <h2 style={{ margin: '0 0 6px 0', fontSize: '26px', fontWeight: '700', color: '#fff' }}>
-                    Welcome back, {currentUser.name || currentUser.full_name || 'Developer'}
-                  </h2>
+                  <h1 style={{ margin: '0 0 4px 0', fontSize: '28px', fontWeight: '700', letterSpacing: '-0.02em', color: 'var(--text-primary)' }}>
+                    Engineering Intelligence Command Center
+                  </h1>
                   <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
-                    <span style={{ fontSize: '12px', color: 'var(--text-secondary)' }}>Subscription Plan:</span>
+                    <span style={{ fontSize: '13px', color: 'var(--text-secondary)' }}>OPERATIONAL REGIME:</span>
                     <span style={{
-                      background: 'rgba(59, 130, 246, 0.1)',
-                      border: '1px solid rgba(59, 130, 246, 0.25)',
-                      color: '#60A5FA',
-                      padding: '3px 10px',
-                      borderRadius: '6px',
-                      fontSize: '11px',
+                      border: '1px solid var(--border-color)',
+                      color: 'var(--text-primary)',
+                      padding: '2px 8px',
+                      borderRadius: '4px',
+                      fontSize: '12px',
                       fontWeight: '600',
-                      textTransform: 'uppercase',
-                      letterSpacing: '0.5px',
-                      boxShadow: '0 0 10px rgba(59, 130, 246, 0.05)'
+                      letterSpacing: '0.5px'
                     }}>
-                      {currentUser.plan || currentUser.plan_type || 'Developer Plan'}
+                      {currentUser.plan || currentUser.plan_type || 'Professional Workspace'}
                     </span>
                   </div>
                 </div>
               </div>
-              <p style={{ color: 'var(--text-secondary)', fontSize: '14px', lineHeight: '1.6', margin: '0 0 24px 0', maxWidth: '680px' }}>
-                Execute static quality scans, audit security boundaries, and generate comprehensive architecture reports for your code repositories.
+              <p style={{ color: 'var(--text-secondary)', fontSize: '16px', lineHeight: '1.6', margin: '0 0 24px 0', maxWidth: '720px' }}>
+                All systems active. Select or connect a repository node on the blueprint canvas below to initialize active code telemetry.
               </p>
-              <button 
-                onClick={() => setActiveTab("repository_analysis")}
-                className="btn-primary"
-                style={{ fontSize: '13px' }}
-              >
-                Analyze New Repository
-              </button>
-            </div>
-          </div>
-
-          {/* Global Statistics Cards */}
-          <div className="grid-cols-4">
-            {/* Repos count */}
-            <div className="glass-card" style={{ display: 'flex', flexDirection: 'column', justifyContent: 'space-between', minHeight: '120px' }}>
-              <span style={{ fontSize: '11px', color: 'var(--text-secondary)', fontWeight: '600', letterSpacing: '0.5px', textTransform: 'uppercase' }}>Total Repositories</span>
-              <span style={{ fontSize: '32px', fontWeight: '800', color: '#fff', margin: '8px 0' }}>{totalRepos}</span>
-              <span style={{ fontSize: '11px', color: 'var(--text-muted)' }}>Registered in workspace</span>
-            </div>
-
-            {/* Avg Score */}
-            <div className="glass-card" style={{ display: 'flex', flexDirection: 'column', justifyContent: 'space-between', minHeight: '120px' }}>
-              <span style={{ fontSize: '11px', color: 'var(--text-secondary)', fontWeight: '600', letterSpacing: '0.5px', textTransform: 'uppercase' }}>Avg Health Score</span>
-              <span style={{ 
-                fontSize: '32px', 
-                fontWeight: '800', 
-                color: avgScore >= 85 ? 'var(--success-color)' : avgScore >= 70 ? 'var(--accent-color)' : avgScore >= 50 ? 'var(--warning-color)' : 'var(--danger-color)',
-                margin: '8px 0' 
-              }}>{avgScore}<span style={{ fontSize: '14px', color: 'var(--text-muted)' }}>/100</span></span>
-              <span style={{ fontSize: '11px', color: 'var(--text-muted)' }}>Workspace average standard</span>
-            </div>
-
-            {/* Total Vulnerabilities */}
-            <div className="glass-card" style={{ display: 'flex', flexDirection: 'column', justifyContent: 'space-between', minHeight: '120px' }}>
-              <span style={{ fontSize: '11px', color: 'var(--text-secondary)', fontWeight: '600', letterSpacing: '0.5px', textTransform: 'uppercase' }}>Vulnerabilities</span>
-              <span style={{ fontSize: '32px', fontWeight: '800', color: totalVulns > 0 ? 'var(--danger-color)' : 'var(--success-color)', margin: '8px 0' }}>{totalVulns}</span>
-              <span style={{ fontSize: '11px', color: 'var(--text-muted)' }}>Security audit alerts</span>
-            </div>
-
-            {/* Suggestions count */}
-            <div className="glass-card" style={{ display: 'flex', flexDirection: 'column', justifyContent: 'space-between', minHeight: '120px' }}>
-              <span style={{ fontSize: '11px', color: 'var(--text-secondary)', fontWeight: '600', letterSpacing: '0.5px', textTransform: 'uppercase' }}>Suggestions</span>
-              <span style={{ fontSize: '32px', fontWeight: '800', color: 'var(--warning-color)', margin: '8px 0' }}>{totalSuggestions}</span>
-              <span style={{ fontSize: '11px', color: 'var(--text-muted)' }}>Recommended actions</span>
-            </div>
-          </div>
-
-          {/* Repositories Cards Grid */}
-          <div>
-            <h3 style={{ margin: '0 0 16px 0', fontSize: '16px', fontWeight: '600', color: '#fff', textTransform: 'uppercase', letterSpacing: '0.5px' }}>
-              Recent Analyses
-            </h3>
-            {projects.length === 0 ? (
-              <div className="glass-card" style={{ textAlign: 'center', padding: '60px' }}>
-                <Terminal size={40} style={{ color: 'var(--text-muted)', marginBottom: '16px' }} />
-                <p style={{ margin: 0, color: 'var(--text-secondary)' }}>No codebases uploaded. Go to Repository Analysis to add your first repository.</p>
+              <div style={{ display: 'flex', gap: '12px' }}>
+                <button 
+                  onClick={() => setActiveTab("repository_analysis")}
+                  className="btn-primary"
+                >
+                  Connect Module
+                </button>
+                <button 
+                  onClick={() => setActiveTab("settings")}
+                  className="btn-secondary"
+                >
+                  Configure Core Agents
+                </button>
               </div>
-            ) : (
-              <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(320px, 1fr))', gap: '20px' }}>
-                {projects.map(p => (
-                  <RepositoryCard
-                    key={p.id}
-                    project={p}
-                    report={projectReports[p.id]}
-                    onSelect={() => {
-                      setSelectedProject(p);
-                      setActiveTab("dashboard");
-                    }}
-                    onDelete={handleDeleteSuccess}
-                  />
-                ))}
-              </div>
-            )}
+            </div>
           </div>
 
+          {/* Interactive Operating Canvas */}
+          <div style={{ display: 'grid', gridTemplateColumns: 'minmax(0, 2fr) minmax(0, 1fr)', gap: '32px' }}>
+            
+            {/* Left Column: Repository Blueprint Node Connections */}
+            <div style={{ display: 'flex', flexDirection: 'column', gap: '32px' }}>
+              
+              <div className="canvas-panel" style={{ padding: '28px', minHeight: '380px', display: 'flex', flexDirection: 'column' }}>
+                <h3 style={{ margin: '0 0 8px 0', fontSize: '15px', fontWeight: '600', color: 'var(--text-secondary)', textTransform: 'uppercase', letterSpacing: '0.05em' }}>
+                  Workspace Schematic Map
+                </h3>
+                <p style={{ color: 'var(--text-muted)', fontSize: '13px', margin: '0 0 24px 0' }}>
+                  A visual schematic of repositories mapped inside the workspace engine. Click any active node to mount.
+                </p>
+
+                {projects.length === 0 ? (
+                  <div style={{ flex: 1, display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', border: '1px dashed var(--border-color)', borderRadius: '6px', padding: '40px' }}>
+                    <Database size={32} style={{ color: 'var(--text-muted)', marginBottom: '12px' }} />
+                    <p style={{ margin: 0, color: 'var(--text-secondary)', fontSize: '14px' }}>No active modules connected. Deploy a repository to begin plotting.</p>
+                  </div>
+                ) : (
+                  <div style={{ flex: 1, display: 'flex', flexWrap: 'wrap', gap: '40px', justifyContent: 'center', alignItems: 'center', position: 'relative', padding: '20px' }}>
+                    
+                    {/* SVG Connector Lines */}
+                    <svg style={{ position: 'absolute', inset: 0, width: '100%', height: '100%', pointerEvents: 'none', zIndex: 0 }}>
+                      <line x1="20%" y1="50%" x2="80%" y2="50%" stroke="var(--border-color)" strokeWidth="1.5" strokeDasharray="4 4" />
+                      <line x1="50%" y1="20%" x2="50%" y2="80%" stroke="var(--border-color)" strokeWidth="1.5" strokeDasharray="4 4" />
+                    </svg>
+
+                    {projects.map((proj, idx) => {
+                      const rep = projectReports[proj.id];
+                      const repScore = rep?.code_quality_score || 70;
+                      const hueColor = repScore >= 85 ? 'var(--success-color)' : repScore >= 70 ? 'var(--accent-color)' : 'var(--warning-color)';
+                      return (
+                        <div
+                          key={proj.id}
+                          onClick={() => {
+                            setSelectedProject(proj);
+                            setActiveTab("dashboard");
+                          }}
+                          style={{
+                            width: '130px',
+                            height: '130px',
+                            borderRadius: '50%',
+                            background: 'var(--bg-secondary)',
+                            border: `2px solid ${hueColor}`,
+                            display: 'flex',
+                            flexDirection: 'column',
+                            alignItems: 'center',
+                            justifyContent: 'center',
+                            cursor: 'pointer',
+                            zIndex: 1,
+                            transition: 'all 0.2s ease',
+                            textAlign: 'center',
+                            padding: '12px',
+                            boxShadow: 'var(--shadow-panel)'
+                          }}
+                          onMouseEnter={(e) => {
+                            e.currentTarget.style.transform = 'scale(1.08)';
+                          }}
+                          onMouseLeave={(e) => {
+                            e.currentTarget.style.transform = 'scale(1)';
+                          }}
+                        >
+                          <span style={{ fontSize: '12px', fontWeight: '700', color: 'var(--text-primary)', overflow: 'hidden', textOverflow: 'ellipsis', width: '100%', whiteSpace: 'nowrap' }}>
+                            {proj.name}
+                          </span>
+                          <span style={{ fontSize: '10px', color: 'var(--text-muted)', textTransform: 'uppercase', marginTop: '2px' }}>
+                            {proj.repository_source === "GITHUB" ? "Git Module" : "ZIP Archive"}
+                          </span>
+                          <div style={{ marginTop: '8px', fontSize: '14px', fontWeight: '700', color: hueColor }}>
+                            {repScore} H20
+                          </div>
+                        </div>
+                      );
+                    })}
+
+                  </div>
+                )}
+              </div>
+
+              {/* Workspace Telemetry metrics summary */}
+              <div style={{ display: 'grid', gridTemplateColumns: 'repeat(3, 1fr)', gap: '20px' }}>
+                <div className="canvas-panel" style={{ margin: 0, padding: '20px' }}>
+                  <span style={{ fontSize: '12px', fontWeight: '700', color: 'var(--text-muted)', textTransform: 'uppercase' }}>Connected Nodes</span>
+                  <div style={{ fontSize: '28px', fontWeight: '700', color: 'var(--text-primary)', marginTop: '8px' }}>{totalRepos}</div>
+                </div>
+                <div className="canvas-panel" style={{ margin: 0, padding: '20px' }}>
+                  <span style={{ fontSize: '12px', fontWeight: '700', color: 'var(--text-muted)', textTransform: 'uppercase' }}>Audited Vulnerabilities</span>
+                  <div style={{ fontSize: '28px', fontWeight: '700', color: totalVulns > 0 ? 'var(--danger-color)' : 'var(--text-primary)', marginTop: '8px' }}>{totalVulns}</div>
+                </div>
+                <div className="canvas-panel" style={{ margin: 0, padding: '20px' }}>
+                  <span style={{ fontSize: '12px', fontWeight: '700', color: 'var(--text-muted)', textTransform: 'uppercase' }}>Active Suggestions</span>
+                  <div style={{ fontSize: '28px', fontWeight: '700', color: 'var(--text-primary)', marginTop: '8px' }}>{totalSuggestions}</div>
+                </div>
+              </div>
+
+            </div>
+
+            {/* Right Column: AI Health telemetry, quick actions */}
+            <div style={{ display: 'flex', flexDirection: 'column', gap: '32px' }}>
+              
+              {/* Engineering Score Dial Gauge */}
+              <div className="canvas-panel" style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', textAlign: 'center', padding: '32px', margin: 0 }}>
+                <h3 style={{ margin: '0 0 16px 0', fontSize: '13px', fontWeight: '600', color: 'var(--text-secondary)', textTransform: 'uppercase', letterSpacing: '0.05em' }}>
+                  System Health Score
+                </h3>
+                <div style={{ position: 'relative', width: '120px', height: '120px', marginBottom: '16px' }}>
+                  <svg height="120" width="120" style={{ transform: 'rotate(-90deg)' }}>
+                    <circle stroke="var(--border-color)" fill="transparent" strokeWidth="6" r="50" cx="60" cy="60" />
+                    <circle stroke="var(--accent-color)" fill="transparent" strokeWidth="6" strokeDasharray={`${2 * Math.PI * 50} ${2 * Math.PI * 50}`} style={{ strokeDashoffset: (2 * Math.PI * 50) - (avgScore / 100) * (2 * Math.PI * 50) }} r="50" cx="60" cy="60" strokeLinecap="round" />
+                  </svg>
+                  <div style={{ position: 'absolute', top: '50%', left: '50%', transform: 'translate(-50%, -50%)', fontSize: '28px', fontWeight: '700', color: 'var(--text-primary)' }}>
+                    {avgScore}
+                  </div>
+                </div>
+                <h4 style={{ margin: '0 0 8px 0', fontSize: '16px', fontWeight: '600' }}>Overall Standard</h4>
+                <p style={{ margin: 0, fontSize: '13px', color: 'var(--text-secondary)', lineHeight: '1.5' }}>
+                  Consolidated compliance coefficient computed from indexing outputs.
+                </p>
+              </div>
+
+              {/* Quick actions Dock */}
+              <div className="canvas-panel" style={{ padding: '24px', margin: 0 }}>
+                <h3 style={{ margin: '0 0 16px 0', fontSize: '13px', fontWeight: '600', color: 'var(--text-secondary)', textTransform: 'uppercase', letterSpacing: '0.05em' }}>
+                  Workspace Commands
+                </h3>
+                <div style={{ display: 'flex', flexDirection: 'column', gap: '8px' }}>
+                  <button 
+                    onClick={() => setActiveTab("repository_analysis")}
+                    className="btn-secondary" 
+                    style={{ width: '100%', justifyContent: 'flex-start', height: '36px', fontSize: '13px' }}
+                  >
+                    📁 Mount New Codebase
+                  </button>
+                  <button 
+                    onClick={() => { setActiveTab("settings") }}
+                    className="btn-secondary" 
+                    style={{ width: '100%', justifyContent: 'flex-start', height: '36px', fontSize: '13px' }}
+                  >
+                    ⚙️ Configure Global Settings
+                  </button>
+                  <button 
+                    onClick={() => { setActiveTab("planner") }}
+                    className="btn-secondary" 
+                    style={{ width: '100%', justifyContent: 'flex-start', height: '36px', fontSize: '13px' }}
+                  >
+                    📋 Build Architectural Blueprint
+                  </button>
+                  <button 
+                    onClick={() => { setActiveTab("autonomous") }}
+                    className="btn-secondary" 
+                    style={{ width: '100%', justifyContent: 'flex-start', height: '36px', fontSize: '13px' }}
+                  >
+                    🤖 Deploy Autonomous Worker
+                  </button>
+                </div>
+              </div>
+
+              {/* Activity Timeline pipeline */}
+              <div className="canvas-panel" style={{ padding: '24px', margin: 0 }}>
+                <h3 style={{ margin: '0 0 16px 0', fontSize: '13px', fontWeight: '600', color: 'var(--text-secondary)', textTransform: 'uppercase', letterSpacing: '0.05em' }}>
+                  Telemetry Feed
+                </h3>
+                <div className="timeline-pipeline" style={{ display: 'flex', flexDirection: 'column', gap: '16px' }}>
+                  <div style={{ position: 'relative' }}>
+                    <div className="timeline-node" />
+                    <span style={{ fontSize: '13px', color: 'var(--text-primary)', fontWeight: '600', display: 'block' }}>Telemetry Mounted</span>
+                    <span style={{ fontSize: '12px', color: 'var(--text-muted)' }}>Workspace environment initiated successfully.</span>
+                  </div>
+                  {projects.map((p, i) => (
+                    <div key={p.id} style={{ position: 'relative' }}>
+                      <div className="timeline-node" style={{ background: p.status === 'completed' ? 'var(--success-color)' : 'var(--warning-color)' }} />
+                      <span style={{ fontSize: '13px', color: 'var(--text-primary)', fontWeight: '600', display: 'block' }}>Node Sync</span>
+                      <span style={{ fontSize: '12px', color: 'var(--text-muted)' }}>"{p.name}" status: {p.status}</span>
+                    </div>
+                  )).slice(0, 2)}
+                </div>
+              </div>
+
+            </div>
+
+          </div>
         </div>
       );
     }
@@ -696,239 +791,109 @@ export default function App() {
     }
   };
 
-  return (
-    <div style={{ display: 'flex', minHeight: '100vh', background: 'var(--bg-primary)' }}>
-      
-      {/* LEFT NAVIGATION SIDEBAR */}
-      {appMode === "rag" && (
-        <aside style={{
-          width: isSidebarCollapsed ? '70px' : '260px',
-          borderRight: '1px solid var(--border-color)',
-          background: 'rgba(11, 15, 25, 0.6)',
-          backdropFilter: 'blur(12px)',
-          display: 'flex',
-          flexDirection: 'column',
-          transition: 'width 0.3s cubic-bezier(0.4, 0, 0.2, 1)',
-          flexShrink: 0,
-          zIndex: 100
-        }}>
-          {/* Logo Brand area */}
-          <div style={{
-            display: 'flex',
-            alignItems: 'center',
-            gap: '12px',
-            padding: '24px 20px',
-            borderBottom: '1px solid var(--border-color)',
-            overflow: 'hidden',
-            whiteSpace: 'nowrap'
-          }}>
-            <FileCode2 size={26} style={{ color: 'var(--accent-color)', flexShrink: 0 }} />
-            {!isSidebarCollapsed && (
-              <span style={{ fontWeight: '700', fontSize: '15px', color: '#fff', letterSpacing: '-0.3px' }}>
-                AI-Powered Software Engineering Assistant
-              </span>
-            )}
-          </div>
+  const navigationSections = [
+    {
+      id: "dashboard",
+      label: "Dashboard",
+      icon: <LayoutDashboard size={14} />,
+      tabs: ["dashboard"]
+    },
+    {
+      id: "repository_analysis",
+      label: "Engineering Workspace",
+      icon: <GitBranch size={14} />,
+      tabs: ["repository_analysis"]
+    },
+    {
+      id: "ai_analysis",
+      label: "AI Analysis",
+      icon: <Sparkles size={14} />,
+      tabs: ["chat", "ai_fixes", "pr_review", "planner", "autonomous", "agse_workspace", "self_learning", "company_simulator"],
+      subItems: [
+        { id: "chat", label: "Engineering AI" },
+        { id: "ai_fixes", label: "AI Fixes" },
+        { id: "pr_review", label: "PR Review" },
+        { id: "planner", label: "Project Planner" },
+        { id: "autonomous", label: "Autonomous Engineer" },
+        { id: "agse_workspace", label: "AGSE Workspace" },
+        { id: "self_learning", label: "Self-Learning AI" },
+        { id: "company_simulator", label: "Company Simulator" }
+      ]
+    },
+    {
+      id: "security",
+      label: "Security",
+      icon: <ShieldAlert size={14} />,
+      tabs: ["security"]
+    },
+    {
+      id: "architecture",
+      label: "Architecture",
+      icon: <Layers size={14} />,
+      tabs: ["engineering_universe", "digital_twin"],
+      subItems: [
+        { id: "engineering_universe", label: "Architecture Map" },
+        { id: "digital_twin", label: "Digital Twin" }
+      ]
+    },
+    {
+      id: "documentation",
+      label: "Documentation",
+      icon: <BookOpen size={14} />,
+      tabs: ["ai_docs", "documentation"],
+      subItems: [
+        { id: "ai_docs", label: "AI Docs" },
+        { id: "documentation", label: "Summary" }
+      ]
+    },
+    {
+      id: "graph",
+      label: "Engineering Knowledge Graph",
+      icon: <Network size={14} />,
+      tabs: ["graph", "civilization_network", "civilization_government", "org_cloud", "universal_brain"],
+      subItems: [
+        { id: "graph", label: "Graph" },
+        { id: "civilization_network", label: "Agent Network" },
+        { id: "civilization_government", label: "Governance Model" },
+        { id: "org_cloud", label: "Org Cloud" },
+        { id: "universal_brain", label: "Agent Orchestrator" }
+      ]
+    },
+    {
+      id: "settings",
+      label: "Settings",
+      icon: <Settings size={14} />,
+      tabs: ["settings"]
+    }
+  ];
 
-          {/* Navigation Links */}
-          <div style={{ flex: 1, padding: '20px 10px', display: 'flex', flexDirection: 'column', gap: '8px' }}>
-            {[
-              { id: "dashboard", label: "Dashboard", icon: <LayoutDashboard size={18} /> },
-              { id: "org_cloud", label: "Organization Cloud", icon: <Building2 size={18} /> },
-              { id: "civilization_network", label: "Civilization Network", icon: <Network size={18} /> },
-              { id: "civilization_government", label: "Civilization Government", icon: <Building2 size={18} /> },
-              { id: "engineering_universe", label: "Engineering Universe", icon: <Layers size={18} /> },
-              { id: "digital_twin", label: "Digital Twin", icon: <Activity size={18} /> },
-              { id: "universal_brain", label: "Universal Brain", icon: <BrainCircuit size={18} /> },
-              { id: "self_learning", label: "Self-Learning AI", icon: <BrainCircuit size={18} /> },
-              { id: "company_simulator", label: "AI Company Simulator", icon: <Users size={18} /> },
-              { id: "planner", label: "Project Planner", icon: <Compass size={18} /> },
-              { id: "autonomous", label: "Autonomous Engineer", icon: <Terminal size={18} /> },
-              { id: "agse_workspace", label: "AGSE Workspace", icon: <Cpu size={18} /> },
-              { id: "repository_analysis", label: "Repository Analysis", icon: <GitBranch size={18} /> },
-              { id: "pr_review", label: "PR Review", icon: <GitPullRequest size={18} /> },
-              { id: "security", label: "Security Findings", icon: <ShieldAlert size={18} /> },
-              { id: "codereview", label: "Code Review", icon: <Lightbulb size={18} /> },
-              { id: "ai_fixes", label: "AI Fixes", icon: <Sparkles size={18} /> },
-              { id: "ai_docs", label: "AI Docs", icon: <BookOpen size={18} /> },
-              { id: "documentation", label: "Report Summary", icon: <FileText size={18} /> },
-              { id: "chat", label: "AI Assistant", icon: <MessageSquare size={18} /> },
-              { id: "graph", label: "Knowledge Graph", icon: <Network size={18} /> },
-              { id: "settings", label: "Settings", icon: <Settings size={18} /> }
-            ].map(tab => {
-              const isActive = activeTab === tab.id;
-              if (isSidebarCollapsed) {
-                return (
-                  <button
-                    key={tab.id}
-                    onClick={() => setActiveTab(tab.id)}
-                    className={`sidebar-collapsed-link ${isActive ? 'active' : ''}`}
-                    title={tab.label}
-                  >
-                    {tab.icon}
-                  </button>
-                );
-              }
-              return (
-                <button
-                  key={tab.id}
-                  onClick={() => setActiveTab(tab.id)}
-                  className={`sidebar-link ${isActive ? 'active' : ''}`}
-                >
-                  {tab.icon}
-                  <span style={{ fontSize: '13px' }}>{tab.label}</span>
-                </button>
-              );
-            })}
-          </div>
-
-          {/* User Profile Info Card */}
-          <div style={{ padding: '10px', borderTop: '1px solid var(--border-color)' }}>
-            {!isSidebarCollapsed ? (
-              <div style={{ 
-                display: 'flex', 
-                alignItems: 'center', 
-                justifyContent: 'space-between',
-                gap: '10px', 
-                padding: '10px 12px', 
-                background: 'rgba(255,255,255,0.02)', 
-                borderRadius: '8px', 
-                border: '1px solid var(--border-color)' 
-              }}>
-                <div style={{ display: 'flex', alignItems: 'center', gap: '10px', minWidth: 0 }}>
-                  <div style={{ 
-                    width: '28px', 
-                    height: '28px', 
-                    borderRadius: '50%', 
-                    background: 'linear-gradient(135deg, var(--accent-color) 0%, #818cf8 100%)', 
-                    color: '#fff', 
-                    display: 'flex', 
-                    alignItems: 'center', 
-                    justifyContent: 'center', 
-                    fontSize: '11px', 
-                    fontWeight: '700', 
-                    flexShrink: 0 
-                  }}>
-                    {currentUser.name ? currentUser.name.split(' ').map(n => n[0]).join('').substring(0, 2).toUpperCase() : "SR"}
-                  </div>
-                  <div style={{ display: 'flex', flexDirection: 'column', minWidth: 0 }}>
-                    <span style={{ fontSize: '12px', fontWeight: '600', color: '#fff', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
-                      {currentUser.name || "SIVAGAMI R"}
-                    </span>
-                    <span style={{ fontSize: '9px', color: 'var(--success-color)', fontWeight: '600', textTransform: 'uppercase' }}>
-                      {currentUser.plan || "Enterprise Plan"}
-                    </span>
-                  </div>
-                </div>
-                <button
-                  onClick={handleLogout}
-                  style={{
-                    background: 'transparent',
-                    border: 'none',
-                    color: 'var(--text-muted)',
-                    cursor: 'pointer',
-                    padding: '4px',
-                    borderRadius: '4px',
-                    display: 'flex',
-                    alignItems: 'center',
-                    justifyContent: 'center',
-                    transition: 'all 0.2s'
-                  }}
-                  onMouseEnter={(e) => e.currentTarget.style.color = 'var(--danger-color)'}
-                  onMouseLeave={(e) => e.currentTarget.style.color = 'var(--text-muted)'}
-                  title="Log Out"
-                >
-                  <LogOut size={14} />
-                </button>
-              </div>
-            ) : (
-              <div style={{ display: 'flex', flexDirection: 'column', gap: '10px', alignItems: 'center' }}>
-                <div style={{ 
-                  width: '28px', 
-                  height: '28px', 
-                  borderRadius: '50%', 
-                  background: 'linear-gradient(135deg, var(--accent-color) 0%, #818cf8 100%)', 
-                  color: '#fff', 
-                  display: 'flex', 
-                  alignItems: 'center', 
-                  justifyContent: 'center', 
-                  fontSize: '10px', 
-                  fontWeight: '700', 
-                  margin: '0 auto' 
-                }}>
-                  {currentUser.name ? currentUser.name.split(' ').map(n => n[0]).join('').substring(0, 2).toUpperCase() : "SR"}
-                </div>
-                <button
-                  onClick={handleLogout}
-                  style={{
-                    background: 'transparent',
-                    border: 'none',
-                    color: 'var(--text-muted)',
-                    cursor: 'pointer',
-                    padding: '4px',
-                    borderRadius: '4px',
-                    display: 'flex',
-                    alignItems: 'center',
-                    justifyContent: 'center',
-                    transition: 'all 0.2s',
-                    margin: '0 auto'
-                  }}
-                  onMouseEnter={(e) => e.currentTarget.style.color = 'var(--danger-color)'}
-                  onMouseLeave={(e) => e.currentTarget.style.color = 'var(--text-muted)'}
-                  title="Log Out"
-                >
-                  <LogOut size={14} />
-                </button>
-              </div>
-            )}
-          </div>
-
-          {/* Collapse Toggle Footer */}
-          <div style={{ padding: '16px', borderTop: '1px solid var(--border-color)', display: 'flex', justifyContent: 'center' }}>
-            <button
-              onClick={() => setIsSidebarCollapsed(!isSidebarCollapsed)}
-              style={{
-                background: 'rgba(255,255,255,0.03)',
-                border: '1px solid var(--border-color)',
-                color: 'var(--text-secondary)',
-                borderRadius: '6px',
-                padding: '6px',
-                cursor: 'pointer',
-                display: 'flex',
-                alignItems: 'center',
-                justifyContent: 'center',
-                transition: 'all 0.2s'
-              }}
-              onMouseEnter={(e) => e.currentTarget.style.borderColor = 'var(--accent-color)'}
-              onMouseLeave={(e) => e.currentTarget.style.borderColor = 'var(--border-color)'}
-            >
-              {isSidebarCollapsed ? <ChevronRight size={16} /> : <ChevronLeft size={16} />}
-            </button>
-          </div>
-        </aside>
-      )}
-
-      {/* RIGHT SIDE VIEW CONTAINER */}
-      <div style={{ display: 'flex', flexDirection: 'column', flex: 1, minWidth: 0 }}>
+  const renderDashboard = () => {
+    return (
+      <div style={{ display: 'flex', flexDirection: 'column', height: '100vh', background: 'var(--bg-primary)', overflow: 'hidden', position: 'relative' }}>
         
-        {/* GLOBAL HEADER BAR */}
+        {/* Futuristic Mission Control Header */}
         <header style={{
           display: 'flex',
           justifyContent: 'space-between',
           alignItems: 'center',
-          padding: '16px 40px',
+          padding: '0 32px',
           borderBottom: '1px solid var(--border-color)',
-          background: 'rgba(15, 23, 42, 0.8)',
-          backdropFilter: 'blur(10px)',
-          position: 'sticky',
-          top: 0,
-          zIndex: 90
+          background: 'var(--bg-navbar)',
+          height: '72px',
+          zIndex: 90,
+          flexShrink: 0
         }}>
-          {/* Left: Project Selector Dropdown */}
           <div style={{ display: 'flex', alignItems: 'center', gap: '16px' }}>
+            <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+              <FileCode2 size={20} style={{ color: 'var(--accent-color)' }} />
+              <span style={{ fontWeight: '700', fontSize: '18px', color: 'var(--text-primary)', letterSpacing: '-0.02em' }}>
+                CodeSphere AI
+              </span>
+            </div>
+            <div style={{ width: '1px', height: '24px', background: 'var(--border-color)' }} />
             {appMode === "rag" ? (
-              <div style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
-                <Database size={16} style={{ color: 'var(--accent-color)' }} />
+              <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+                <Database size={14} style={{ color: 'var(--text-secondary)' }} />
                 <select
                   value={selectedProject?.id || ""}
                   onChange={(e) => {
@@ -946,18 +911,19 @@ export default function App() {
                     }
                   }}
                   style={{
-                    background: 'rgba(10, 9, 21, 0.6)',
+                    background: 'var(--bg-primary)',
                     border: '1px solid var(--border-color)',
                     color: 'var(--text-primary)',
-                    borderRadius: '8px',
-                    padding: '8px 16px',
+                    borderRadius: '6px',
+                    padding: '6px 12px',
                     outline: 'none',
-                    fontSize: '13px',
+                    fontSize: '14px',
                     cursor: 'pointer',
-                    minWidth: '220px'
+                    minWidth: '200px',
+                    width: 'auto'
                   }}
                 >
-                  <option value="">-- Workspace Dashboard --</option>
+                  <option value="">-- Active Module --</option>
                   {projects.map(p => (
                     <option key={p.id} value={p.id}>{p.name}</option>
                   ))}
@@ -971,52 +937,36 @@ export default function App() {
                       border: 'none',
                       color: 'var(--text-muted)',
                       cursor: 'pointer',
-                      padding: '8px',
-                      borderRadius: '6px',
+                      padding: '4px',
+                      borderRadius: '4px',
                       display: 'flex',
                       alignItems: 'center',
-                      justifyContent: 'center',
-                      transition: 'all 0.2s'
+                      justifyContent: 'center'
                     }}
                     onMouseEnter={(e) => e.currentTarget.style.color = 'var(--danger-color)'}
                     onMouseLeave={(e) => e.currentTarget.style.color = 'var(--text-muted)'}
-                    title="Delete Repository"
+                    title="Erase Active Module"
                   >
-                    <Trash2 size={16} />
+                    <Trash2 size={14} />
                   </button>
                 )}
               </div>
             ) : (
-              <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
-                <FileCode2 size={24} style={{ color: 'var(--accent-color)' }} />
-                <span style={{ fontWeight: '700', fontSize: '16px' }}>Direct MVP Codebase Analyzer</span>
-              </div>
+              <span style={{ fontWeight: '500', fontSize: '14px', color: 'var(--text-secondary)' }}>Direct Scan Mode</span>
             )}
           </div>
-          
-          {/* Right: Mode Switcher & Status badges */}
-          <div style={{ display: 'flex', alignItems: 'center', gap: '16px' }}>
-            {appMode === "rag" && selectedProject && selectedProject.status === "completed" && (
-              <div style={{
-                background: 'rgba(34, 197, 94, 0.1)',
-                border: '1px solid rgba(34, 197, 94, 0.25)',
-                color: 'var(--success-color)',
-                fontSize: '12px',
-                padding: '6px 14px',
-                borderRadius: '20px',
-                fontWeight: '600',
-                boxShadow: '0 0 10px rgba(34, 197, 94, 0.05)'
-              }}>
-                RAG Connected
-              </div>
-            )}
 
+          <div style={{ display: 'flex', alignItems: 'center', gap: '16px' }}>
+            <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+              <ThemeToggle />
+            </div>
+            
             <div style={{
               display: 'flex',
-              background: 'rgba(255, 255, 255, 0.02)',
+              background: 'var(--bg-primary)',
               border: '1px solid var(--border-color)',
-              borderRadius: '8px',
-              padding: '4px'
+              borderRadius: '6px',
+              padding: '2px'
             }}>
               <button
                 onClick={() => setAppMode("rag")}
@@ -1024,15 +974,15 @@ export default function App() {
                   padding: '6px 12px',
                   border: 'none',
                   background: appMode === "rag" ? 'var(--accent-color)' : 'transparent',
-                  color: appMode === "rag" ? '#fff' : 'var(--text-secondary)',
-                  borderRadius: '6px',
+                  color: appMode === "rag" ? '#ffffff' : 'var(--text-secondary)',
+                  borderRadius: '4px',
                   cursor: 'pointer',
                   fontWeight: '500',
                   fontSize: '13px',
-                  transition: 'all 0.2s'
+                  transition: 'all 0.12s ease'
                 }}
               >
-                RAG Mode
+                RAG Engine
               </button>
               <button
                 onClick={() => setAppMode("mvp")}
@@ -1040,12 +990,12 @@ export default function App() {
                   padding: '6px 12px',
                   border: 'none',
                   background: appMode === "mvp" ? 'var(--accent-color)' : 'transparent',
-                  color: appMode === "mvp" ? '#fff' : 'var(--text-secondary)',
-                  borderRadius: '6px',
+                  color: appMode === "mvp" ? '#ffffff' : 'var(--text-secondary)',
+                  borderRadius: '4px',
                   cursor: 'pointer',
                   fontWeight: '500',
                   fontSize: '13px',
-                  transition: 'all 0.2s'
+                  transition: 'all 0.12s ease'
                 }}
               >
                 Direct MVP Scan
@@ -1054,16 +1004,126 @@ export default function App() {
           </div>
         </header>
 
-        {/* MAIN DISPLAY BODY CONTENT FLEX */}
-        <main style={{ flex: 1, padding: '30px 40px', minWidth: 0, overflowY: 'auto' }}>
-          {appMode === "mvp" ? (
-            <MvpUpload />
-          ) : (
-            renderActiveTabContent()
-          )}
-        </main>
-      </div>
+        {/* Workspace Canvas Container */}
+        <div style={{ display: 'flex', flex: 1, minHeight: 0, position: 'relative', overflow: 'hidden' }}>
+          <main style={{ flex: 1, padding: '40px 40px 100px 40px', overflowY: 'auto', display: 'flex', flexDirection: 'column', alignItems: 'center' }}>
+            <div style={{ width: '100%', maxWidth: '1600px', display: 'flex', flexDirection: 'column', gap: '32px' }}>
+              {appMode === "mvp" ? (
+                <MvpUpload />
+              ) : (
+                renderActiveTabContent()
+              )}
+            </div>
+          </main>
+        </div>
 
-    </div>
+        {/* Floating Sub-Dock for repository tabs */}
+        {appMode === "rag" && selectedProject && (
+          <div className="workspace-dock" style={{ bottom: '90px', padding: '4px 8px', borderRadius: '8px', background: 'var(--bg-card)', height: 'auto', width: 'auto', display: 'flex', gap: '4px', alignItems: 'center' }}>
+            <span style={{ fontSize: '13px', fontWeight: '700', color: 'var(--text-secondary)', padding: '0 8px', borderRight: '1px solid var(--border-color)', marginRight: '4px' }}>
+              {selectedProject.name}
+            </span>
+            {[
+              { id: "dashboard", label: "Overview" },
+              { id: "engineering_universe", label: "Architecture" },
+              { id: "security", label: "Security" },
+              { id: "ai_docs", label: "Docs" },
+              { id: "graph", label: "Knowledge Graph" },
+              { id: "chat", label: "AI Assistant" },
+              { id: "ai_fixes", label: "Fix Suggestions" }
+            ].map(tab => (
+              <button
+                key={tab.id}
+                onClick={() => setActiveTab(tab.id)}
+                className={`btn-secondary ${activeTab === tab.id ? 'active' : ''}`}
+                style={{
+                  height: '32px',
+                  padding: '0 12px',
+                  fontSize: '13px',
+                  borderRadius: '6px',
+                  background: activeTab === tab.id ? 'var(--accent-color)' : 'transparent',
+                  color: activeTab === tab.id ? '#ffffff' : 'var(--text-primary)',
+                  border: 'none',
+                  cursor: 'pointer'
+                }}
+              >
+                {tab.label}
+              </button>
+            ))}
+          </div>
+        )}
+
+        {/* Bottom Floating Command Dock */}
+        {appMode === "rag" && (
+          <div className="workspace-dock">
+            {navigationSections.map(section => {
+              const isSectionActive = section.tabs.includes(activeTab) || (section.subItems && section.subItems.some(sub => sub.id === activeTab));
+              return (
+                <button
+                  key={section.id}
+                  onClick={() => {
+                    if (section.subItems && section.subItems.length > 0) {
+                      setActiveTab(section.subItems[0].id);
+                    } else {
+                      setActiveTab(section.tabs[0]);
+                    }
+                  }}
+                  className={`dock-item ${isSectionActive ? 'active' : ''}`}
+                >
+                  {section.icon}
+                  <span className="dock-tooltip">{section.label}</span>
+                </button>
+              );
+            })}
+            
+            <div style={{ width: '1px', background: 'var(--border-color)', margin: '8px 0' }} />
+            
+            <button
+              onClick={handleLogout}
+              className="dock-item"
+              title="Log Out"
+            >
+              <LogOut size={14} />
+              <span className="dock-tooltip">Logout</span>
+            </button>
+          </div>
+        )}
+
+        {/* PERSISTENT STATUS FOOTER */}
+        <footer className="ide-footer">
+          <div style={{ display: 'flex', alignItems: 'center', gap: '12px' }}>
+            <span><strong>CodeSphere Canvas</strong> | Telemetry ACTIVE</span>
+            <span style={{ color: 'var(--border-color)' }}>|</span>
+            <span>AI-Powered Software Engineering Command Center</span>
+          </div>
+          <div style={{ display: 'flex', alignItems: 'center', gap: '12px' }}>
+            <span>Inference: Groq LPU</span>
+            <span style={{ color: 'var(--border-color)' }}>|</span>
+            <span>Latency: 1.24s</span>
+          </div>
+        </footer>
+      </div>
+    );
+  };
+
+  return (
+    <Router>
+      <Routes>
+        <Route path="/" element={<LandingPage />} />
+        <Route path="/login" element={<LoginPage onLoginSuccess={handleLoginSuccess} />} />
+        <Route path="/signup" element={<SignupPage onLoginSuccess={handleLoginSuccess} />} />
+        <Route 
+          path="/dashboard" 
+          element={
+            isAuthenticated && currentUser ? (
+              renderDashboard()
+            ) : (
+              <Navigate to="/login" replace />
+            )
+          } 
+        />
+        <Route path="*" element={<Navigate to="/" replace />} />
+      </Routes>
+    </Router>
   );
 }

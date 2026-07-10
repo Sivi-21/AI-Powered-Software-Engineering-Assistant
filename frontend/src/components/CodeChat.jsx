@@ -6,7 +6,7 @@ export default function CodeChat({ project }) {
   const [messages, setMessages] = useState([
     {
       role: "assistant",
-      content: `Hello! I am your AI repository engineer. I have indexed this repository. Ask me anything, for example:\n- *Explain this repository's structure*\n- *Find all API endpoints*\n- *How is error handling implemented?*`
+      content: `Hello! I am your AI repository engineer. I have indexed this repository. Ask me anything, for example:\n- Explain this repository's structure\n- Find all API endpoints\n- How is error handling implemented?`
     }
   ]);
   const [input, setInput] = useState("");
@@ -62,21 +62,21 @@ export default function CodeChat({ project }) {
   ];
 
   return (
-    <div className="glass-card" style={{ display: 'flex', flexDirection: 'column', height: '620px', padding: '0', overflow: 'hidden' }}>
+    <div className="premium-card" style={{ display: 'flex', flexDirection: 'column', height: '600px', padding: '0', overflow: 'hidden' }}>
       
       {/* Chat Header */}
       <div style={{
         display: 'flex',
         alignItems: 'center',
         gap: '10px',
-        padding: '16px 20px',
+        padding: '14px 20px',
         borderBottom: '1px solid var(--border-color)',
-        background: 'rgba(255, 255, 255, 0.01)'
+        background: 'var(--bg-card)'
       }}>
-        <MessageSquare size={20} style={{ color: 'var(--accent-color)' }} />
+        <MessageSquare size={16} style={{ color: 'var(--text-secondary)' }} />
         <div>
-          <h3 style={{ margin: 0, fontSize: '16px', fontWeight: '600' }}>Codebase Chat Assistant</h3>
-          <span style={{ fontSize: '11px', color: 'var(--success-color)' }}>Project: {project.name} (RAG Mode)</span>
+          <h3 style={{ margin: 0, fontSize: '14px', fontWeight: '600', letterSpacing: '-0.01em' }}>Codebase Chat Assistant</h3>
+          <span style={{ fontSize: '11px', color: 'var(--success-color)' }}>Project: {project.name}</span>
         </div>
       </div>
 
@@ -87,8 +87,8 @@ export default function CodeChat({ project }) {
         padding: '20px',
         display: 'flex',
         flexDirection: 'column',
-        gap: '20px',
-        background: 'rgba(10, 9, 21, 0.2)'
+        gap: '16px',
+        background: 'var(--bg-primary)'
       }}>
         {messages.map((msg, index) => {
           const isBot = msg.role === "assistant";
@@ -105,32 +105,30 @@ export default function CodeChat({ project }) {
             >
               {/* Avatar */}
               <div style={{
-                width: '36px',
-                height: '36px',
+                width: '32px',
+                height: '32px',
                 borderRadius: '50%',
-                background: isBot ? 'rgba(59, 130, 246, 0.1)' : 'rgba(99, 102, 241, 0.1)',
+                background: 'var(--bg-card)',
                 display: 'flex',
                 alignItems: 'center',
                 justifyContent: 'center',
                 flexShrink: 0,
-                border: `1px solid ${isBot ? 'var(--accent-color)' : 'rgba(99, 102, 241, 0.3)'}`,
-                boxShadow: isBot ? '0 0 10px rgba(59, 130, 246, 0.1)' : 'none'
+                border: '1px solid var(--border-color)'
               }}>
-                {isBot ? <Bot size={18} style={{ color: 'var(--accent-color)' }} /> : <User size={18} style={{ color: '#818cf8' }} />}
+                {isBot ? <Bot size={14} style={{ color: 'var(--text-primary)' }} /> : <User size={14} style={{ color: 'var(--text-secondary)' }} />}
               </div>
 
               {/* Speech bubble */}
               <div style={{ display: 'flex', flexDirection: 'column', gap: '6px' }}>
                 <div style={{
-                  background: isBot ? 'var(--bg-card)' : 'rgba(59, 130, 246, 0.12)',
-                  border: `1px solid ${isBot ? 'var(--border-color)' : 'rgba(59, 130, 246, 0.3)'}`,
-                  padding: '12px 16px',
-                  borderRadius: isBot ? '0px 16px 16px 16px' : '16px 0px 16px 16px',
-                  fontSize: '14px',
+                  background: isBot ? 'var(--bg-card)' : '#27272a',
+                  border: '1px solid var(--border-color)',
+                  padding: '10px 14px',
+                  borderRadius: '6px',
+                  fontSize: '13px',
                   lineHeight: '1.6',
                   whiteSpace: 'pre-wrap',
-                  color: 'var(--text-primary)',
-                  boxShadow: '0 4px 12px rgba(0, 0, 0, 0.15)'
+                  color: 'var(--text-primary)'
                 }}>
                   {msg.content}
                 </div>
@@ -141,14 +139,14 @@ export default function CodeChat({ project }) {
                     display: 'flex',
                     flexDirection: 'column',
                     gap: '4px',
-                    marginTop: '4px',
+                    marginTop: '2px',
                     padding: '8px 12px',
-                    background: 'rgba(255, 255, 255, 0.01)',
-                    borderRadius: '8px',
-                    border: '1px solid rgba(255, 255, 255, 0.03)'
+                    background: 'var(--bg-card)',
+                    borderRadius: '6px',
+                    border: '1px solid var(--border-color)'
                   }}>
-                    <div style={{ display: 'flex', alignItems: 'center', gap: '6px', fontSize: '11px', color: 'var(--text-muted)', fontWeight: '600' }}>
-                      <BookOpen size={12} />
+                    <div style={{ display: 'flex', alignItems: 'center', gap: '6px', fontSize: '10px', color: 'var(--text-muted)', fontWeight: '600', letterSpacing: '0.05em' }}>
+                      <BookOpen size={10} />
                       <span>REFERENCE FILES:</span>
                     </div>
                     <div style={{ display: 'flex', gap: '6px', flexWrap: 'wrap', marginTop: '2px' }}>
@@ -156,8 +154,8 @@ export default function CodeChat({ project }) {
                         <span
                           key={sIdx}
                           style={{
-                            background: 'rgba(255, 255, 255, 0.03)',
-                            padding: '3px 8px',
+                            background: 'var(--bg-primary)',
+                            padding: '2px 6px',
                             borderRadius: '4px',
                             border: '1px solid var(--border-color)',
                             color: 'var(--text-secondary)',
@@ -178,32 +176,31 @@ export default function CodeChat({ project }) {
         {loading && (
           <div style={{ display: 'flex', gap: '12px', alignSelf: 'flex-start' }}>
             <div style={{
-              width: '36px',
-              height: '36px',
+              width: '32px',
+              height: '32px',
               borderRadius: '50%',
-              background: 'rgba(59, 130, 246, 0.1)',
+              background: 'var(--bg-card)',
               display: 'flex',
               alignItems: 'center',
               justifyContent: 'center',
-              border: '1px solid var(--accent-color)'
+              border: '1px solid var(--border-color)'
             }}>
-              <Bot size={18} style={{ color: 'var(--accent-color)' }} />
+              <Bot size={14} style={{ color: 'var(--text-primary)' }} />
             </div>
             
             {/* Animated Typing Indicator */}
             <div style={{
               background: 'var(--bg-card)',
               border: '1px solid var(--border-color)',
-              padding: '16px 20px',
-              borderRadius: '0px 16px 16px 16px',
+              padding: '10px 14px',
+              borderRadius: '6px',
               display: 'flex',
               alignItems: 'center',
-              gap: '6px',
-              boxShadow: '0 4px 12px rgba(0, 0, 0, 0.15)'
+              gap: '4px'
             }}>
-              <span className="typing-dot" style={{ width: '6px', height: '6px', background: 'var(--text-muted)', borderRadius: '50%', display: 'inline-block', animation: 'bounce 1.4s infinite ease-in-out both' }} />
-              <span className="typing-dot" style={{ width: '6px', height: '6px', background: 'var(--text-muted)', borderRadius: '50%', display: 'inline-block', animation: 'bounce 1.4s infinite ease-in-out both', animationDelay: '0.2s' }} />
-              <span className="typing-dot" style={{ width: '6px', height: '6px', background: 'var(--text-muted)', borderRadius: '50%', display: 'inline-block', animation: 'bounce 1.4s infinite ease-in-out both', animationDelay: '0.4s' }} />
+              <span className="typing-dot" style={{ width: '4px', height: '4px', background: 'var(--text-muted)', borderRadius: '50%', display: 'inline-block' }} />
+              <span className="typing-dot" style={{ width: '4px', height: '4px', background: 'var(--text-muted)', borderRadius: '50%', display: 'inline-block', animationDelay: '0.2s' }} />
+              <span className="typing-dot" style={{ width: '4px', height: '4px', background: 'var(--text-muted)', borderRadius: '50%', display: 'inline-block', animationDelay: '0.4s' }} />
             </div>
           </div>
         )}
@@ -213,27 +210,22 @@ export default function CodeChat({ project }) {
       {/* Quick Prompts */}
       {messages.length === 1 && !loading && (
         <div style={{
-          padding: '0 20px 10px 20px',
+          padding: '10px 20px',
           display: 'flex',
-          gap: '8px',
-          flexWrap: 'wrap'
+          gap: '6px',
+          flexWrap: 'wrap',
+          background: 'var(--bg-primary)'
         }}>
           {quickPrompts.map((p, idx) => (
             <button
               key={idx}
               onClick={(e) => handleSend(e, p)}
+              className="btn-secondary"
               style={{
-                background: 'rgba(255,255,255,0.02)',
-                border: '1px solid var(--border-color)',
-                borderRadius: '6px',
-                padding: '6px 12px',
-                fontSize: '12px',
-                color: 'var(--text-secondary)',
-                cursor: 'pointer',
-                transition: 'all 0.2s'
+                borderRadius: '4px',
+                padding: '4px 10px',
+                fontSize: '11px'
               }}
-              onMouseEnter={(e) => e.currentTarget.style.borderColor = 'var(--accent-color)'}
-              onMouseLeave={(e) => e.currentTarget.style.borderColor = 'var(--border-color)'}
             >
               {p}
             </button>
@@ -243,39 +235,27 @@ export default function CodeChat({ project }) {
 
       {/* Input Form */}
       <form onSubmit={handleSend} style={{
-        padding: '16px 20px',
+        padding: '14px 20px',
         borderTop: '1px solid var(--border-color)',
-        background: 'rgba(10, 9, 21, 0.4)',
+        background: 'var(--bg-card)',
         display: 'flex',
-        gap: '12px'
+        gap: '8px'
       }}>
         <input
           type="text"
           value={input}
           onChange={(e) => setInput(e.target.value)}
           placeholder="Ask a question about the repository..."
-          style={{
-            flex: 1,
-            padding: '12px 16px',
-            borderRadius: '8px',
-            background: 'rgba(10, 9, 21, 0.6)',
-            border: '1px solid var(--border-color)',
-            color: 'var(--text-primary)',
-            outline: 'none',
-            fontSize: '14px',
-            transition: 'border-color 0.2s'
-          }}
-          onFocus={(e) => e.target.style.borderColor = 'var(--accent-color)'}
-          onBlur={(e) => e.target.style.borderColor = 'var(--border-color)'}
           disabled={loading}
+          style={{ flex: 1 }}
         />
         <button
           type="submit"
           className="btn-primary"
-          style={{ padding: '12px', borderRadius: '8px' }}
+          style={{ padding: '8px 12px' }}
           disabled={loading || !input.trim()}
         >
-          <Send size={16} />
+          <Send size={14} />
         </button>
       </form>
     </div>

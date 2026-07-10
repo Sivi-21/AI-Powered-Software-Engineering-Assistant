@@ -213,3 +213,112 @@ async def github_callback(payload: GitHubCallbackInput):
         "access_token": jwt_access_token,
         "token_type": "bearer"
     }
+
+
+class GoogleCallbackInput(BaseModel):
+    id_token: str
+
+class GoogleLoginResponse(BaseModel):
+    access_token: str
+    refresh_token: str
+    token_type: str = "bearer"
+    user: UserOut
+
+@router.post("/google", response_model=GoogleLoginResponse)
+async def google_callback(payload: GoogleCallbackInput):
+    """Verifies the Google ID token and logs in or registers the user."""
+    from google.oauth2 import id_token
+    from google.auth.transport import requests
+    from app.services.auth_helper import create_refresh_token
+    from app.schemas.user import UserOut
+
+    client_id = settings.GOOGLE_CLIENT_ID
+    logger.info("Initiating Google authentication flow.")
+    if not client_id:
+        logger.warning("Google Authentication is disabled: GOOGLE_CLIENT_ID is not configured on the server.")
+        raise HTTPException(
+            status_code=status.HTTP_400_BAD_REQUEST,
+            detail="Google Authentication is disabled / not configured on this server."
+        )
+    logger.info(f"Google Client ID verified on server: {client_id[:15]}...")
+
+    try:
+        logger.debug("Verifying ID Token using Google's authentication libraries.")
+        # Verify the ID Token using Google's official library
+        idinfo = id_token.verify_oauth2_token(
+            payload.id_token, 
+            requests.Request(), 
+            client_id
+        )
+
+        # Check issuer
+        if idinfo['iss'] not in ['accounts.google.com', 'https://accounts.google.com']:
+            logger.error(f"Google authentication failed: Wrong issuer '{idinfo.get('iss')}'")
+            raise ValueError('Wrong issuer.')
+
+        logger.info("Google ID token verified successfully via google-auth API.")
+
+    except Exception as e:
+        logger.error(f"Google ID token verification failed with error: {str(e)}")
+        raise HTTPException(
+            status_code=status.HTTP_401_UNAUTHORIZED,
+            detail="Invalid Google credentials or ID Token."
+        )
+
+    # Token is valid; extract user parameters
+    google_id = idinfo.get("sub")
+    email = idinfo.get("email")
+    full_name = idinfo.get("name") or idinfo.get("given_name") or "Google User"
+    avatar_url = idinfo.get("picture")
+
+    logger.info(f"Extracted user info: email={email}, sub={google_id}, name={full_name}")
+
+    if not email:
+        logger.error("Google ID token is missing verified email address.")
+        raise HTTPException(
+            status_code=status.HTTP_400_BAD_REQUEST,
+            detail="Google ID token does not contain a verified email address."
+        )
+
+    # Check if user already registered via Google
+    logger.debug(f"Checking if user with Google ID {google_id} exists in database.")
+    user = await db_service.get_user_by_google_id(google_id)
+    if not user:
+        logger.info(f"No user found by Google ID. Checking if email {email} exists for local account association.")
+        # Check if email is already in use by local user
+        user = await db_service.get_user_by_email(email)
+        if user:
+            logger.info(f"Found existing local user with email {email}. Linking Google ID {google_id}.")
+            # Associate Google login with existing local account
+            db = get_database()
+            update_data = {
+                "google_id": google_id,
+                "login_provider": "google"
+            }
+            if not user.get("avatar_url") and avatar_url:
+                update_data["avatar_url"] = avatar_url
+            await db.users.update_one({"_id": user["id"]}, {"$set": update_data})
+            # Retrieve updated user
+            user = await db_service.get_user(user["id"])
+        else:
+            logger.info(f"Creating a new Google user in database for email {email}.")
+            # Create a brand new Google user
+            user = await db_service.create_google_user(
+                google_id=google_id,
+                email=email,
+                full_name=full_name,
+                avatar_url=avatar_url
+            )
+    else:
+        logger.info(f"User {email} successfully resolved using Google ID.")
+
+    jwt_access_token = create_access_token(data={"sub": str(user["id"])})
+    jwt_refresh_token = create_refresh_token(data={"sub": str(user["id"])})
+    logger.info(f"Authentication token generated successfully for user ID: {user['id']}")
+
+    return {
+        "access_token": jwt_access_token,
+        "refresh_token": jwt_refresh_token,
+        "token_type": "bearer",
+        "user": UserOut(**user)
+    }

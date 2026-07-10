@@ -65,7 +65,7 @@ export default function CivilizationGovernment() {
       
       {/* Sidebar - Proposal History */}
       <div className="glass-card" style={{ padding: '16px', display: 'flex', flexDirection: 'column', gap: '16px', overflowY: 'auto' }}>
-        <h4 style={{ color: '#fff', fontSize: '13px', margin: 0, textTransform: 'uppercase', letterSpacing: '0.5px' }}>Council Sessions</h4>
+        <h4 style={{ color: '#fff', fontSize: '13px', margin: 0, textTransform: 'uppercase', letterSpacing: '0.5px' }}>Review Sessions</h4>
         <div style={{ display: 'flex', flexDirection: 'column', gap: '8px' }}>
           {sessions.map(s => {
             const isActive = activeSession?.id === s.id;
@@ -90,7 +90,7 @@ export default function CivilizationGovernment() {
                 </div>
                 <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: '10px', color: 'var(--text-secondary)' }}>
                   <span>Ballot: {s.yes_votes}Y - {s.no_votes}N</span>
-                  <span style={{ color: s.verdict === 'approved' ? 'var(--success-color)' : 'var(--danger-color)' }}>
+                  <span style={{ color: s.verdict === 'approved' ? 'var(--success-color)' : 'var(--warning-color)' }}>
                     {s.verdict}
                   </span>
                 </div>
@@ -108,7 +108,7 @@ export default function CivilizationGovernment() {
           <form onSubmit={handlePropose} style={{ display: 'flex', gap: '12px' }}>
             <input
               type="text"
-              placeholder="Submit proposal to the AI Engineering Council (e.g. Migrate core database tables to PostgreSQL)..."
+              placeholder="Submit proposal to the Engineering Leadership Council (e.g. Migrate core database tables to PostgreSQL)..."
               value={proposalInput}
               onChange={(e) => setProposalInput(e.target.value)}
               disabled={loading}

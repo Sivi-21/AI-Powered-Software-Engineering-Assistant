@@ -56,10 +56,10 @@ export default function AuthScreen({ onLoginSuccess }) {
     setLoading(true);
     try {
       const response = await loginUser(loginEmail.trim(), loginPassword);
-      localStorage.setItem("intellios_jwt", response.access_token);
+      localStorage.setItem("codesphere_jwt", response.access_token);
       
       const profile = await getProfile();
-      localStorage.setItem("intellios_user", JSON.stringify(profile));
+      localStorage.setItem("codesphere_user", JSON.stringify(profile));
       onLoginSuccess(profile);
     } catch (err) {
       setError(err.message || "Failed to authenticate.");
@@ -104,10 +104,10 @@ export default function AuthScreen({ onLoginSuccess }) {
 
       // Automatically log in after registration
       const response = await loginUser(signupEmail.trim(), signupPassword);
-      localStorage.setItem("intellios_jwt", response.access_token);
+      localStorage.setItem("codesphere_jwt", response.access_token);
       
       const profile = await getProfile();
-      localStorage.setItem("intellios_user", JSON.stringify(profile));
+      localStorage.setItem("codesphere_user", JSON.stringify(profile));
       onLoginSuccess(profile);
     } catch (err) {
       setError(err.message || "Failed to register account.");
@@ -133,10 +133,10 @@ export default function AuthScreen({ onLoginSuccess }) {
       }
 
       const response = await loginUser(socialEmail, "socialpassword123!");
-      localStorage.setItem("intellios_jwt", response.access_token);
+      localStorage.setItem("codesphere_jwt", response.access_token);
       
       const profile = await getProfile();
-      localStorage.setItem("intellios_user", JSON.stringify(profile));
+      localStorage.setItem("codesphere_user", JSON.stringify(profile));
       onLoginSuccess(profile);
     } catch (err) {
       setError(`Failed social login via ${provider}: ${err.message}`);
@@ -262,11 +262,11 @@ export default function AuthScreen({ onLoginSuccess }) {
                   WebkitBackgroundClip: 'text',
                   WebkitTextFillColor: 'transparent'
                 }}>
-                  AI-Powered Software Engineering Assistant
+                  CodeSphere AI
                 </span>
               </div>
               <span style={{ fontSize: '12px', color: 'var(--text-muted)', fontWeight: '600', textTransform: 'uppercase', letterSpacing: '1px' }}>
-                AI-Powered Engineering Intelligence
+                AI-Powered Software Engineering Platform
               </span>
             </div>
 

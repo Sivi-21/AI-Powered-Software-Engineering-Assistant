@@ -86,6 +86,44 @@ class DBService:
         logger.info(f"Created GitHub user in MongoDB: {user_id} ({email})")
         return user_doc
 
+    async def get_user_by_google_id(self, google_id: str) -> dict | None:
+        """Retrieves a single user by their Google user ID."""
+        db = get_database()
+        user = await db.users.find_one({"google_id": google_id})
+        if user:
+            user["id"] = user.pop("_id")
+        return user
+
+    async def create_google_user(
+        self,
+        google_id: str,
+        email: str,
+        full_name: str,
+        avatar_url: str | None = None
+    ) -> dict:
+        """Creates a new User record for Google OAuth login."""
+        import secrets
+        from app.services.auth_helper import hash_password
+        db = get_database()
+        random_pass = secrets.token_urlsafe(24)
+        user_id = str(uuid.uuid4())
+        user_doc = {
+            "_id": user_id,
+            "email": email,
+            "hashed_password": hash_password(random_pass),
+            "full_name": full_name,
+            "organization": "Google Login",
+            "plan_type": "Developer Plan",
+            "created_at": datetime.now(timezone.utc),
+            "google_id": google_id,
+            "avatar_url": avatar_url,
+            "login_provider": "google"
+        }
+        await db.users.insert_one(user_doc)
+        user_doc["id"] = user_doc.pop("_id")
+        logger.info(f"Created Google user in MongoDB: {user_id} ({email})")
+        return user_doc
+
     # --- Project & Report Scoped Methods ---
 
     async def create_project(
