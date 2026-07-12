@@ -59,7 +59,14 @@ class Settings(BaseSettings):
     GOOGLE_CLIENT_SECRET: str | None = None
 
     # Allowed CORS Origins (comma-separated string)
-    ALLOWED_ORIGINS: str = "http://localhost:3000,http://localhost:5173"
+
+    ALLOWED_ORIGINS: str = (
+    "http://localhost:3000,"
+    "http://localhost:5173,"
+    "https://codesphere-ai-omega.vercel.app,"
+    "https://codesphere-6i31digho-sivagamiradhakrishnan21-5553s-projects.vercel.app"
+)
+   
 
     @model_validator(mode="after")
     def set_jwt_secret_key(self):
