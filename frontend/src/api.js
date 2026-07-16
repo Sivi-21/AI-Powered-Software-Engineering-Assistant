@@ -108,6 +108,17 @@ export async function getReport(projectId) {
   return response.json();
 }
 
+export async function exportFullReport(projectId) {
+  const response = await fetch(`${API_BASE_URL}/projects/${projectId}/full-report`, {
+    headers: getHeaders(),
+  });
+  if (!response.ok) {
+    const errorData = await response.json().catch(() => ({}));
+    throw new Error(errorData.detail || "Failed to export complete report.");
+  }
+  return response.blob();
+}
+
 export async function queryCodebase(projectId, query, history = []) {
   const response = await fetch(`${API_BASE_URL}/projects/${projectId}/query`, {
     method: "POST",

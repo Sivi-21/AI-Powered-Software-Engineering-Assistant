@@ -12,6 +12,7 @@ from app.main import app
 from app.config import settings
 from app.services.vector_store import vector_store
 from app.services.file_parser import is_text_file, parse_zip_file
+from app.services.pdf_generator import build_full_report_sections
 from app.exceptions import ParsingError
 
 # Initialize the TestClient
@@ -196,6 +197,52 @@ def test_read_root_endpoint():
     data = response.json()
     assert "Welcome" in data["message"]
     assert data["docs_url"] == "/docs"
+
+
+def test_build_full_report_sections_includes_required_chapters():
+    """Regression test: full report sections should include documentation and metrics chapters."""
+    report = {
+        "summary": "Repository summary",
+        "generated_docs": {
+            "readme": "# README\n\nProject overview",
+            "installation": "# Installation\n\nInstall steps",
+            "api_docs": "# API Documentation\n\nEndpoints",
+            "developer_guide": "# Developer Guide\n\nContribute",
+            "architecture": "# Architecture Overview\n\nFlow",
+            "folder_structure": "# Folder Structure\n\nLayout",
+            "database": "# Database Documentation\n\nSchema",
+        },
+        "vulnerabilities": [{"severity": "HIGH", "description": "Weakness"}],
+        "suggestions": [{"suggestion": "Add tests"}],
+        "ai_fixes": [{"explanation": "Improve auth"}],
+        "code_quality_score": 88,
+        "security_score": 82,
+        "architecture_score": 76,
+        "maintainability_score": 90,
+        "documentation_score": 92,
+        "testing_score": 85,
+        "dependency_score": 81,
+        "technical_debt": 14,
+        "code_complexity": 11,
+        "full_report_md": "# Full Report\n\nA report summary",
+    }
+
+    sections = build_full_report_sections(report)
+    titles = [section["title"] for section in sections]
+
+    assert "Executive Summary" in titles
+    assert "README" in titles
+    assert "Installation Guide" in titles
+    assert "API Documentation" in titles
+    assert "Developer Guide" in titles
+    assert "Architecture Overview" in titles
+    assert "Folder Structure" in titles
+    assert "Database Documentation" in titles
+    assert "Security Findings" in titles
+    assert "AI Recommendations" in titles
+    assert "Code Quality Metrics" in titles
+    assert "Knowledge Graph Summary" in titles
+
 
 def test_list_projects_empty_db():
     """Positive Case: List projects returns an empty array when no projects exist."""

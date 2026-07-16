@@ -14,6 +14,7 @@ export default function LoginPage({ onLoginSuccess }) {
   const [error, setError] = useState('');
 
   React.useEffect(() => {
+    console.log("Google Client ID =", import.meta.env.VITE_GOOGLE_CLIENT_ID);
     const clientId = import.meta.env.VITE_GOOGLE_CLIENT_ID;
     if (clientId) {
       console.log("[Diagnostics] Google Client ID loaded:", clientId.substring(0, 10) + "...");
@@ -36,7 +37,7 @@ export default function LoginPage({ onLoginSuccess }) {
     try {
       const response = await loginUser(email.trim(), password);
       localStorage.setItem('codesphere_jwt', response.access_token);
-      
+
       const profile = await getProfile();
       localStorage.setItem('codesphere_user', JSON.stringify(profile));
       onLoginSuccess(profile);
@@ -56,7 +57,7 @@ export default function LoginPage({ onLoginSuccess }) {
       color: 'var(--text-primary)',
       fontFamily: "'Inter', sans-serif"
     }}>
-      
+
       {/* LEFT SIDE: BRANDING PANEL */}
       <div style={{
         flex: 1,
@@ -101,7 +102,7 @@ export default function LoginPage({ onLoginSuccess }) {
 
         {/* Bottom footer toggle */}
         <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', zIndex: 1 }}>
-          <button 
+          <button
             onClick={() => navigate('/')}
             style={{ display: 'flex', alignItems: 'center', gap: '8px', background: 'transparent', border: 'none', color: 'var(--text-secondary)', cursor: 'pointer', fontSize: '15px' }}
           >
@@ -139,11 +140,11 @@ export default function LoginPage({ onLoginSuccess }) {
               <label style={{ fontSize: '14px', fontWeight: '500', color: 'var(--text-secondary)' }}>Email Address</label>
               <div style={{ position: 'relative' }}>
                 <Mail size={16} style={{ position: 'absolute', left: '16px', top: '50%', transform: 'translateY(-50%)', color: 'var(--text-muted)' }} />
-                <input 
-                  type="email" 
+                <input
+                  type="email"
                   value={email}
                   onChange={(e) => setEmail(e.target.value)}
-                  placeholder="name@company.com" 
+                  placeholder="name@company.com"
                   style={{ paddingLeft: '44px', width: '100%', height: '48px', border: '1px solid var(--border-color)', borderRadius: '10px', background: 'var(--bg-primary)', color: 'var(--text-primary)', fontSize: '15px' }}
                   required
                 />
@@ -157,11 +158,11 @@ export default function LoginPage({ onLoginSuccess }) {
               </div>
               <div style={{ position: 'relative' }}>
                 <Lock size={16} style={{ position: 'absolute', left: '16px', top: '50%', transform: 'translateY(-50%)', color: 'var(--text-muted)' }} />
-                <input 
-                  type="password" 
+                <input
+                  type="password"
                   value={password}
                   onChange={(e) => setPassword(e.target.value)}
-                  placeholder="••••••••" 
+                  placeholder="••••••••"
                   style={{ paddingLeft: '44px', width: '100%', height: '48px', border: '1px solid var(--border-color)', borderRadius: '10px', background: 'var(--bg-primary)', color: 'var(--text-primary)', fontSize: '15px' }}
                   required
                 />
@@ -169,9 +170,9 @@ export default function LoginPage({ onLoginSuccess }) {
             </div>
 
             <div style={{ display: 'flex', alignItems: 'center', gap: '8px', fontSize: '14px' }}>
-              <input 
-                type="checkbox" 
-                id="remember" 
+              <input
+                type="checkbox"
+                id="remember"
                 checked={rememberMe}
                 onChange={(e) => setRememberMe(e.target.checked)}
                 style={{ width: '16px', height: '16px', accentColor: 'var(--accent-color)', cursor: 'pointer' }}

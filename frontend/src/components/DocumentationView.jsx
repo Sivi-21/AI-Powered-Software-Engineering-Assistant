@@ -1,10 +1,12 @@
 import React, { useState } from 'react';
 import { BookOpen, Copy, Download, Check, FileText, Printer } from 'lucide-react';
+import { exportFullReport } from '../api';
 
 export default function DocumentationView({ report }) {
   const docs = report?.generated_docs || {};
   const [selectedDoc, setSelectedDoc] = useState("readme");
   const [copied, setCopied] = useState(false);
+  const [isExporting, setIsExporting] = useState(false);
 
   const docTypes = [
     { key: "readme", label: "README.md" },
@@ -71,6 +73,31 @@ export default function DocumentationView({ report }) {
     printWindow.document.close();
   };
 
+  const handleExportCompleteReport = async () => {
+    if (!report?.project_id && !report?.id) {
+      alert("No project is currently selected for a full export.");
+      return;
+    }
+
+    const projectId = report.project_id || report.id;
+    setIsExporting(true);
+    try {
+      const blob = await exportFullReport(projectId);
+      const url = window.URL.createObjectURL(blob);
+      const element = document.createElement('a');
+      element.href = url;
+      element.download = 'complete-report.pdf';
+      document.body.appendChild(element);
+      element.click();
+      document.body.removeChild(element);
+      window.URL.revokeObjectURL(url);
+    } catch (error) {
+      alert(error.message || 'Failed to export the complete report.');
+    } finally {
+      setIsExporting(false);
+    }
+  };
+
   return (
     <div style={{ display: 'flex', gap: '24px', height: '620px' }}>
       
@@ -134,12 +161,22 @@ export default function DocumentationView({ report }) {
             </button>
 
             <button
-              onClick={handleDownloadPDF}
+              onClick={handleExportCompleteReport}
               className="btn-primary"
+              style={{ padding: '6px 12px', fontSize: '12px', display: 'flex', alignItems: 'center', gap: '6px' }}
+              disabled={isExporting}
+            >
+              <Download size={14} />
+              {isExporting ? 'Generating…' : 'Export Complete Report'}
+            </button>
+
+            <button
+              onClick={handleDownloadPDF}
+              className="btn-secondary"
               style={{ padding: '6px 12px', fontSize: '12px', display: 'flex', alignItems: 'center', gap: '6px' }}
             >
               <Printer size={14} />
-              Export PDF
+              Export Current PDF
             </button>
           </div>
         </div>

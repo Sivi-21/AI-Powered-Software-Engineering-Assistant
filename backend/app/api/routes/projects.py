@@ -4,6 +4,7 @@ import shutil
 import uuid
 from pathlib import Path
 from fastapi import APIRouter, Depends, UploadFile, File, Form, BackgroundTasks, status, HTTPException
+from fastapi.responses import FileResponse
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.database import get_db
@@ -16,6 +17,7 @@ from app.services.file_parser import parse_zip_file
 from app.services.vector_store import vector_store
 from app.services.agent_workflow import agent_workflow
 from app.services.analysis_pipeline import analysis_pipeline
+from app.services.pdf_generator import build_full_report_sections, compile_report_pdf
 from app.api.deps import get_current_user
 from app.models.user import User
 
@@ -175,6 +177,51 @@ async def get_project_report(
         report["project_id"] = report.pop("repository_id")
 
     return report
+
+@router.get("/{project_id}/full-report")
+async def get_full_report_pdf(
+    project_id: uuid.UUID,
+    current_user: User = Depends(get_current_user)
+):
+    """Generate and return a full enterprise-grade PDF report for a project."""
+    project = await db_service.get_project(project_id)
+    if not project:
+        raise ProjectNotFoundError(str(project_id))
+
+    if str(project.get("owner_id")) != str(current_user.id):
+        raise HTTPException(
+            status_code=status.HTTP_403_FORBIDDEN,
+            detail="Forbidden: You do not have permission to access this repository."
+        )
+
+    if project.get("status") != "completed":
+        raise AppException(
+            f"Report is not ready. Project status: {project.get('status')}",
+            status_code=status.HTTP_400_BAD_REQUEST
+        )
+
+    report = await db_service.get_report_by_project(project_id)
+    if not report:
+        raise AppException("Report data not found.", status_code=status.HTTP_404_NOT_FOUND)
+
+    output_path = Path(settings.UPLOAD_DIR) / f"{project_id}_full_report.pdf"
+    output_path.parent.mkdir(parents=True, exist_ok=True)
+
+    sections = build_full_report_sections(report)
+    compile_report_pdf(
+        project_name=project.get("repository_name") or project.get("name") or str(project_id),
+        project_owner=project.get("owner_name") or current_user.full_name or current_user.email or "Unknown Owner",
+        repository_source=project.get("repository_source") or "Unknown",
+        commit_hash=project.get("commit_hash") or "N/A",
+        sections=sections,
+        output_path=str(output_path),
+    )
+
+    return FileResponse(
+        path=str(output_path),
+        filename="complete-report.pdf",
+        media_type="application/pdf"
+    )
 
 @router.post("/{project_id}/query", response_model=QueryResponse)
 async def query_codebase(
