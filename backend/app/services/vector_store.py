@@ -2,10 +2,25 @@ import os
 import logging
 import uuid
 import chromadb
-import chromadb.utils.embedding_functions as ef
+from chromadb import EmbeddingFunction, Documents, Embeddings
 from app.config import settings
 
 logger = logging.getLogger("app.services.vector_store")
+
+class GeminiEmbeddingFunction(EmbeddingFunction):
+    def __init__(self, api_key: str):
+        from langchain_google_genai import GoogleGenerativeAIEmbeddings
+        self.embedder = GoogleGenerativeAIEmbeddings(
+            model="models/text-embedding-004",
+            google_api_key=api_key
+        )
+
+    def __call__(self, input: Documents) -> Embeddings:
+        try:
+            return self.embedder.embed_documents(list(input))
+        except Exception as e:
+            logger.error(f"Error generating Gemini embeddings: {e}")
+            raise e
 
 class VectorStoreService:
     def __init__(self):
@@ -20,13 +35,9 @@ class VectorStoreService:
         api_key = settings.GEMINI_API_KEY or os.environ.get("GEMINI_API_KEY")
         if api_key:
             try:
-                os.environ["GEMINI_API_KEY"] = api_key
-                return ef.GoogleGenaiEmbeddingFunction(
-                    model_name="text-embedding-004",
-                    api_key_env_var="GEMINI_API_KEY"
-                )
+                return GeminiEmbeddingFunction(api_key=api_key)
             except Exception as e:
-                logger.warning(f"Could not initialize GoogleGenaiEmbeddingFunction: {e}")
+                logger.warning(f"Could not initialize GeminiEmbeddingFunction: {e}")
         return None
 
     def _get_collection_name(self, project_id: uuid.UUID) -> str:
@@ -114,11 +125,14 @@ class VectorStoreService:
         # Add in smaller batches to avoid memory spikes on low-RAM containers
         batch_size = 50
         for i in range(0, len(documents), batch_size):
-            collection.add(
-                documents=documents[i:i+batch_size],
-                metadatas=metadatas[i:i+batch_size],
-                ids=ids[i:i+batch_size]
-            )
+            try:
+                collection.add(
+                    documents=documents[i:i+batch_size],
+                    metadatas=metadatas[i:i+batch_size],
+                    ids=ids[i:i+batch_size]
+                )
+            except Exception as e:
+                logger.error(f"Error adding batch to collection {collection_name}: {e}")
             
         logger.info(f"Indexing completed for collection {collection_name}. Total chunks: {len(documents)}")
 
