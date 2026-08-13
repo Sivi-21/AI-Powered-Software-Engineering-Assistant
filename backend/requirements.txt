@@ -21,3 +21,4 @@ langchain-openai>=0.1.0
 google-auth>=2.29.0
 aiosqlite>=0.20.0
 reportlab==4.2.2
+google-genai>=0.1.0

@@ -1,6 +1,8 @@
+import os
 import logging
 import uuid
 import chromadb
+import chromadb.utils.embedding_functions as ef
 from app.config import settings
 
 logger = logging.getLogger("app.services.vector_store")
@@ -9,6 +11,23 @@ class VectorStoreService:
     def __init__(self):
         # Initialize Persistent ChromaDB client
         self.client = chromadb.PersistentClient(path=settings.CHROMA_PERSIST_DIR)
+
+    def _get_embedding_function(self):
+        """
+        Returns a lightweight API-based embedding function (Google Gemini)
+        to avoid loading heavy ONNX / PyTorch models into server RAM on Render.
+        """
+        api_key = settings.GEMINI_API_KEY or os.environ.get("GEMINI_API_KEY")
+        if api_key:
+            try:
+                os.environ["GEMINI_API_KEY"] = api_key
+                return ef.GoogleGenaiEmbeddingFunction(
+                    model_name="text-embedding-004",
+                    api_key_env_var="GEMINI_API_KEY"
+                )
+            except Exception as e:
+                logger.warning(f"Could not initialize GoogleGenaiEmbeddingFunction: {e}")
+        return None
 
     def _get_collection_name(self, project_id: uuid.UUID) -> str:
         """Helper to get a valid ChromaDB collection name from project ID."""
@@ -65,8 +84,12 @@ class VectorStoreService:
         collection_name = self._get_collection_name(project_id)
         logger.info(f"Indexing {len(parsed_files)} files in collection {collection_name}")
         
-        # Get or create the collection
-        collection = self.client.get_or_create_collection(name=collection_name)
+        # Get or create the collection with lightweight embedding function
+        emb_fn = self._get_embedding_function()
+        if emb_fn:
+            collection = self.client.get_or_create_collection(name=collection_name, embedding_function=emb_fn)
+        else:
+            collection = self.client.get_or_create_collection(name=collection_name)
         
         documents = []
         metadatas = []
@@ -88,8 +111,8 @@ class VectorStoreService:
                 })
                 ids.append(f"{file_path}_chunk_{chunk_idx}")
 
-        # Add in batches if large
-        batch_size = 500
+        # Add in smaller batches to avoid memory spikes on low-RAM containers
+        batch_size = 50
         for i in range(0, len(documents), batch_size):
             collection.add(
                 documents=documents[i:i+batch_size],
@@ -104,8 +127,12 @@ class VectorStoreService:
         Performs semantic similarity search inside the project's codebase.
         """
         collection_name = self._get_collection_name(project_id)
+        emb_fn = self._get_embedding_function()
         try:
-            collection = self.client.get_collection(name=collection_name)
+            if emb_fn:
+                collection = self.client.get_collection(name=collection_name, embedding_function=emb_fn)
+            else:
+                collection = self.client.get_collection(name=collection_name)
         except Exception:
             logger.warning(f"Collection {collection_name} not found.")
             return []
