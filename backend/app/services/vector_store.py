@@ -11,7 +11,7 @@ class GeminiEmbeddingFunction(EmbeddingFunction):
     def __init__(self, api_key: str):
         from langchain_google_genai import GoogleGenerativeAIEmbeddings
         self.embedder = GoogleGenerativeAIEmbeddings(
-            model="models/text-embedding-004",
+            model="gemini-embedding-2",
             google_api_key=api_key
         )
 
